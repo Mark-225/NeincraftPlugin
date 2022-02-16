@@ -1,0 +1,72 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+compileJava.options.encoding = 'UTF-8'
+
+group = 'de.neincraft'
+version = 'v0.1-alpha'
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc-repo'
+        url = 'https://papermc.io/repo/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+
+    maven {
+        name = 'minebench-repo'
+        url = 'https://repo.minebench.de/'
+    }
+
+    maven { url 'https://jitpack.io' }
+    mavenLocal()
+}
+
+dependencies {
+    //implementation group: 'com.flowpowered', name: 'flow-math', version: '1.0.3' //comment out to allow usage without bluemap
+    implementation 'org.jetbrains:annotations:22.0.0'
+    compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
+    compileOnly 'com.github.BlueMap-Minecraft:BlueMapAPI:1.7.0'
+    implementation 'org.reflections:reflections:0.10.2'
+    implementation 'com.zaxxer:HikariCP:5.0.1'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+    implementation 'org.slf4j:slf4j-jdk14:1.7.35'
+    implementation group: 'org.hibernate', name: 'hibernate-hikaricp', version: '5.6.1.Final'
+    implementation group: 'org.hibernate', name: 'hibernate-core', version: '5.6.1.Final'
+    implementation 'de.themoep:minedown-adventure:1.7.2-SNAPSHOT'
+}
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.WARN
+    from(sourceSets.main.resources.srcDirs) {
+        filter ReplaceTokens, tokens: [version: version]
+    }
+}
+
+tasks.jar.dependsOn(shadowJar)
+
+shadowJar {
+    relocate 'com.flowpowered', 'com.flowpowered'
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+
+task relocateShadowJar(type: ConfigureShadowRelocation) {
+    target = tasks.shadowJar
+    prefix = "de.neincraft.shadow"
+}
+
+tasks.shadowJar.dependsOn tasks.relocateShadowJar

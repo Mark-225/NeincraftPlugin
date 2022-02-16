@@ -1,0 +1,15 @@
+name: NeincraftPlugin
+version: @version@
+main: de.neincraft.neincraftplugin.NeincraftPlugin
+api-version: 1.17
+authors: [ Mark_225 ]
+
+commands:
+  plot:
+    aliases:
+      - gs
+    permission: neincraft.commands.plot
+  plotadmin:
+    aliases:
+      - gsadmin
+    permission: neincraft.commands.plotadmin
