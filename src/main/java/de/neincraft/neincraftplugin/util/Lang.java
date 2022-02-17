@@ -14,7 +14,7 @@ public enum Lang {
     PLAYER_NOT_FOUND("&red&Spieler %player% nicht gefunden!", "&red&Player %player% not found!"),
     WRONG_EXECUTOR("&red&Du kannst diesen Command nicht ausführen!", "&red&You can't execute this command!"),
     WRONG_SYNTAX("&red&Falsche Syntax. Bitte verwende das Format:\n" +
-        "[\\[](color=aqua)[/%label% ](color=gold)[%args%](color=white)[\\]](color=aqua)",
+        "[\\[](color=aqua)[/%label% ](color=gold)[%args%](color=yellow)[\\]](color=aqua)",
     "&red&Wrong syntax. Please use the following structure:\n" +
         "[\\[](color=aqua)[/%label% ](color=gold)[%args%](color=white)[\\]](color=aqua)"),
     FATAL_ERROR("&red&Ein unerwarteter Fehler ist aufgetreten! Sollte der Fehler bestehen bleiben, wende dich bitte an die Admins.",
@@ -49,12 +49,14 @@ public enum Lang {
             [  =====](color=blue)[\\[](color=aqua)[%name%](color=white)[\\]](color=aqua)[=====  ](color=blue)
             [Besitzer: ](color=yellow)[%owner%](color=white)
             [Chunks: ](color=yellow)[%chunks%](color=white)
-            [Deine Gruppe: ](color=yellow)[%group%](color=white)\040""",
-            """
-                    [  =====](color=blue)[\\[](color=aqua)[%name%](color=white)[\\]](color=aqua)[=====  ](color=blue)
-                    [Owner: ](color=yellow)[%owner%](color=white)
-                    [Chunks: ](color=yellow)[%chunks%](color=white)
-                    [Your Group: ](color=yellow)[%group%](color=white)\040"""),
+            [Deine Gruppe: ](color=yellow)[%group%](color=white)\040
+            """,
+    """
+            [  =====](color=blue)[\\[](color=aqua)[%name%](color=white)[\\]](color=aqua)[=====  ](color=blue)
+            [Owner: ](color=yellow)[%owner%](color=white)
+            [Chunks: ](color=yellow)[%chunks%](color=white)
+            [Your Group: ](color=yellow)[%group%](color=white)\040
+            """),
     PLOT_CONFIRMATION_FAILED("&red&Der eingegebene Bestätigungscode ist falsch!", "&red&The provided confirmation token is wrong!"),
     MULTIPLE_PLOTS_SURROUNDING("&yellow&Es gibt mehrere angrenzende Grundstücke. Bitte wähle eines aus folgender Liste:\n" +
             "&gray&(Anklicken oder Namen an den vorherigen Command anfügen)", "&yellow&Multiple plots surround this chunk. Please select a plot from the following list:\n" +
@@ -66,6 +68,7 @@ public enum Lang {
     PLOT_SUBDIVISION_NOT_FOUND("&red&Es existiert kein Bereich mit dem angegebenen Namen!", "&red&A subdivision with the provided name does not exist!"),
     PLOT_SUBDIVISION_DELETED("&green&Bereich erfolgreich gelöscht!", "&green&Subdivision deleted successfully!"),
     PLOT_SUBDIVISION_PROTECTED("&red&Der Bereich ist geschützt und kann nicht gelöscht werden!", "&red&The subdivision is protected and can't be deleted!"),
+    PLOT_SUBDIVISION_LIST("&yellow&Die folgenden Bereiche sind für dieses Grundstück definiert:", "&yellow&The following subdivisions are defined on this plot:"),
 
     //Settings
     PLOT_SETTINGS_DEFAULT_DESC("Diese Einstellung hat keine Beschreibung", "This setting does not have a description"),
@@ -81,18 +84,22 @@ public enum Lang {
             """),
     PLOT_SETTINGS_ENTRY("[%setting%](color=white hover=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%defined%](color=yellow)",
             "[%setting%](color=white hover=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%defined%](color=yellow)"),
+    PLOT_SETTING_PROTECTED("&red&Nur Admins können diese Einstellung konfigurieren!", "&red&Only administrators can configure this setting!"),
     //groups
     PLOT_GROUP_EXISTS("&red&Eine Gruppe mit diesem Namen existiert bereits!", "&red&A group with this name already exists!"),
     PLOT_GROUP_NOT_FOUND("&red&Eine gruppe mit diesem Namen existiert nicht!", "&red&A group with this name does not exist!"),
     PLOT_GROUP_CREATED("&green&Gruppe erfolgreich erstellt!", "&green&Group created successfully!"),
     PLOT_GROUP_DELETED("&green&Gruppe gelöscht. Alle Mitglieder gehören jetzt wieder \"everyone\" an!", "&green&Group deleted. All members are now part of \"everyone\""),
     PLOT_GROUP_PROTECTED("&red&Die Gruppe ist geschützt und kann nicht gelöscht werden!", "&red&The subdivision ist protected and can't be deleted!"),
+    PLOT_GROUP_LIST("&yellow&Die folgenden Gruppen sind auf diesem Grundstück registriert:", "&yellow&The following groups are registered on this plot"),
     PLOT_GROUP_MEMBERS_LIST("&yellow&Folgende Spieler gehören der Gruppe %group% an:", "&yellow&The following players are part of the group %group%"),
     PLOT_GROUP_MEMBER_QUERY("&yellow&Der Spieler %player% gehört der Gruppe %group% an.", "&yellow&The player %player% is member of the group %group%."),
     PLOT_GROUP_EVERYONE_LIST("&yellow&Alle Spieler außer folgende gehören der Standardgruppe \"everyone\" an:", "&yellow&All players except the following are part of the default group \"everyone\":"),
     PLOT_PERMISSION_UPDATED("&green&Berechtigung gespeichert!", "&green&Permission saved!"),
     PLOT_PERMISSION_VALUE_INCORRECT("&red&Ungültiger Wert für Berechtigung. Nutze \"true\", \"false\" oder \"delete\"", "&red&Invalid value for plot permission. Use \"true\", \"false\" or \"delete\""),
-    PLOT_PERMISSION_NOT_FOUND("&red&Es existiert keine Berechtigung mit diesem Namen!", "&red&A permission with this name does not exist!");
+    PLOT_PERMISSION_NOT_FOUND("&red&Es existiert keine Berechtigung mit diesem Namen!", "&red&A permission with this name does not exist!"),
+    PLOT_PERMISSION_LIST("&yellow&Die folgenden Berechtigungen sind für die Gruppe %group% im Bereich %subdivision% konfiguriert:", "&yellow&The following permissions are configured for group %group% in subdivision %subdivision%:"),
+    PLOT_PERMISSION_ENTRY("[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%group% - %subdivision%](color=yellow)", "[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%group% - %subdivision%](color=yellow)");
 
 
     private final String german;

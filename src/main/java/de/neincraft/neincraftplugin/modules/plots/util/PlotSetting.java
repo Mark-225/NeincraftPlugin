@@ -11,7 +11,8 @@ public enum PlotSetting {
     FALL_DAMAGE(true, false),
     DROWNING_DAMAGE(true, false),
     ALLOW_TNT(false),
-    ALLOW_MOB_GRIEFING(false);
+    ALLOW_MOB_GRIEFING(false),
+    KEEP_INVENTORY(false, false);
 
     private final boolean defaultValue;
     private final boolean userEditable;

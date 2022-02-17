@@ -1,12 +1,8 @@
 package de.neincraft.neincraftplugin.modules.plots;
 
 import de.neincraft.neincraftplugin.modules.plots.dto.*;
-import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
-import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.GroupId;
-import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
-import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.SettingId;
+import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.*;
 import de.neincraft.neincraftplugin.modules.plots.repository.PlotRepository;
-import de.neincraft.neincraftplugin.modules.plots.util.PermissionValue;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotBoundingBox;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
@@ -16,6 +12,7 @@ import org.bukkit.World;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -92,6 +89,8 @@ public class Plot {
     public boolean deleteSubdivision(SubdivisionData subdivisionData){
         if(subdivisionData == null || protectedSubdivisions.contains(subdivisionData.getName()))
             return false;
+        SubdivisionData mainSubdivision = getSubdivision("main");
+        plotData.getChunks().stream().filter(chunkData -> chunkData.getSubdivision() == subdivisionData).forEach(chunkData -> chunkData.setSubdivision(mainSubdivision));
         return plotData.getSubdivisions().remove(subdivisionData);
     }
 
@@ -239,22 +238,56 @@ public class Plot {
         return null;
     }
 
-    public PermissionValue resolvePermission(SubdivisionData subdivision, PlotMemberGroup group, PlotPermission permission){
+    public void setPermission(SubdivisionData subdivisionData, PlotMemberGroup group, PlotPermission permission, boolean value){
+        PermissionFlag permissionFlag;
+        if((permissionFlag = getPermissionData(subdivisionData, group, permission)) == null) {
+            permissionFlag = new PermissionFlag(new PermissionId(group, subdivisionData, permission), value);
+            group.getGroupPermissions().add(permissionFlag);
+        }else{
+            permissionFlag.setValue(value);
+        }
+    }
+
+    public void unsetPermission(SubdivisionData subdivisionData, PlotMemberGroup group, PlotPermission permission){
+        PermissionFlag permissionFlag = getPermissionData(subdivisionData, group, permission);
+        if(permissionFlag != null){
+            group.getGroupPermissions().remove(permissionFlag);
+        }
+    }
+
+    public boolean resolvePermission(SubdivisionData subdivision, PlotMemberGroup group, PlotPermission permission, BiConsumer<SubdivisionData, PlotMemberGroup> definedIn){
+        BiConsumer<SubdivisionData, PlotMemberGroup> callback = definedIn != null ? definedIn : (a,b) -> {};
         PermissionFlag permissionData = getPermissionData(subdivision, group, permission);
-        if(permissionData != null)
+        if(permissionData != null) {
+            callback.accept(subdivision, group);
             return permissionData.getValue();
+        }
+
         PlotMemberGroup everyone = getGroup("everyone");
         permissionData = getPermissionData(subdivision, everyone, permission);
-        if(permissionData != null)
+        if(permissionData != null) {
+            callback.accept(subdivision, everyone);
             return permissionData.getValue();
+        }
+
         SubdivisionData main = getSubdivision("main");
         permissionData = getPermissionData(main, group, permission);
-        if(permissionData != null)
+        if(permissionData != null) {
+            callback.accept(main, group);
             return permissionData.getValue();
+        }
+
         permissionData = getPermissionData(main, everyone, permission);
-        if(permissionData != null)
+        if(permissionData != null) {
+            callback.accept(main, everyone);
             return permissionData.getValue();
+        }
+        callback.accept(null, null);
         return permission.getPublicDefault();
+    }
+
+    public boolean resolvePermission(SubdivisionData subdivision, PlotMemberGroup group, PlotPermission permission){
+        return resolvePermission(subdivision, group, permission, null);
     }
 
     public boolean isServerPlot(){

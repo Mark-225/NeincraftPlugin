@@ -1,7 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots.dto;
 
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.PermissionId;
-import de.neincraft.neincraftplugin.modules.plots.util.PermissionValue;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 
 import javax.persistence.*;
@@ -30,13 +29,13 @@ public class PermissionFlag implements Serializable {
     @EmbeddedId
     private PermissionId permissionId;
 
-    @Enumerated(value = EnumType.STRING)
-    private PermissionValue value;
+    @Column
+    private boolean value;
 
     public PermissionFlag() {
     }
 
-    public PermissionFlag(PermissionId permissionId, PermissionValue value) {
+    public PermissionFlag(PermissionId permissionId, boolean value) {
         this.permissionId = permissionId;
         this.value = value;
     }
@@ -49,11 +48,11 @@ public class PermissionFlag implements Serializable {
         this.permissionId = permissionId;
     }
 
-    public PermissionValue getValue() {
+    public boolean getValue() {
         return value;
     }
 
-    public void setValue(PermissionValue value) {
+    public void setValue(boolean value) {
         this.value = value;
     }
 }

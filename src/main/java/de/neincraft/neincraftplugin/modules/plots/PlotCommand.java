@@ -8,12 +8,16 @@ import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerStats;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import de.neincraft.neincraftplugin.modules.plots.dto.ChunkData;
+import de.neincraft.neincraftplugin.modules.plots.dto.PlotMemberGroup;
 import de.neincraft.neincraftplugin.modules.plots.dto.SubdivisionData;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
+import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
+import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import de.neincraft.neincraftplugin.util.Lang;
 import de.themoep.minedown.adventure.MineDown;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.command.Command;
@@ -22,9 +26,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -291,6 +293,20 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 player.sendMessage(Lang.PLOT_SUBDIVISION_DELETED.getComponent(pd.getLanguage(), player));
             }
 
+            case "listsubdivisions" ->{
+                if(args.length > 1){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0]
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                player.sendMessage(Lang.PLOT_SUBDIVISION_LIST.getComponent(pd.getLanguage(), player));
+                player.sendMessage(new MineDown("&gold&" + plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).collect(Collectors.joining(", "))).toComponent());
+            }
+
             case "settings" ->{
                 if(args.length != 4){
                     player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
@@ -307,6 +323,10 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     PlotSetting setting = PlotSetting.findByName(args[2]);
                     if(setting == null){
                         player.sendMessage(Lang.PLOT_SETTING_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                        break;
+                    }
+                    if(!adminMode && !setting.isUserEditable()){
+                        player.sendMessage(Lang.PLOT_SETTING_PROTECTED.getComponent(pd.getLanguage(), player));
                         break;
                     }
                     switch (args[3].toLowerCase()){
@@ -359,13 +379,209 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                             "description", setting.getDescription().getRawString(pd.getLanguage(), player),
                             "value", value ? Lang.YES.getRawString(pd.getLanguage(), player) : Lang.NO.getRawString(pd.getLanguage(), player),
                             "valueColor", value ? "green" : "red",
-                            "defined", definedIn[0]
+                            "defined", definedIn[0] != null ? definedIn[0] : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
                     ).toComponent());
                 }
             }
 
             case "addgroup" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + " [name]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                if(plot.getGroup(args[1]) != null){
+                    player.sendMessage(Lang.PLOT_GROUP_EXISTS.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                if(!PlotModule.PLOT_NAME_PATTERN.matcher(args[1]).matches()){
+                    player.sendMessage(Lang.PLOT_NAME_INVALID.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                plot.createGroup(args[1]);
+                plot.persist();
+                player.sendMessage(Lang.PLOT_GROUP_CREATED.getComponent(pd.getLanguage(), player));
+            }
 
+            case "deletegroup" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + " [name]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                PlotMemberGroup group = plot.getGroup(args[1]);
+                if(group == null){
+                    player.sendMessage(Lang.PLOT_GROUP_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                if(!plot.deleteGroup(group)){
+                    player.sendMessage(Lang.PLOT_GROUP_PROTECTED.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                plot.persist();
+                player.sendMessage(Lang.PLOT_GROUP_DELETED.getComponent(pd.getLanguage(), player));
+            }
+
+            case "listgroups" ->{
+                if(args.length != 1){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0]
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                player.sendMessage(Lang.PLOT_GROUP_LIST.getComponent(pd.getLanguage(), player));
+                player.sendMessage(
+                        new MineDown("&gold&" + plot.getPlotData().getGroups().stream().map(group -> group.getGroupId().getGroupName()).collect(Collectors.joining(", "))).toComponent()
+                );
+            }
+
+            case "listmembers" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] +" [group]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                PlotMemberGroup group = plot.getGroup(args[1]);
+                if(group == null){
+                    player.sendMessage(Lang.PLOT_GROUP_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                boolean everyone = group.getGroupId().getGroupName().equalsIgnoreCase("everyone");
+                Component listHeader = everyone ? Lang.PLOT_GROUP_EVERYONE_LIST.getComponent(pd.getLanguage(), player) : Lang.PLOT_GROUP_MEMBERS_LIST.getMinedown(pd.getLanguage(), player).replace("group", group.getGroupId().getGroupName()).toComponent();
+                String members = everyone ? plot.getPlotData().getGroups().stream().flatMap(g -> g.getMembers().stream()).distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", ")) : group.getMembers().stream().distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", "));
+                player.sendMessage(listHeader);
+                player.sendMessage(new MineDown("&gold&" + members).toComponent());
+            }
+
+            case "getgroup" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] +" [player]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                Optional<UUID> playerUUID = NeincraftUtils.nameToUuid(args[1]);
+                if(playerUUID.isEmpty()){
+                    player.sendMessage(Lang.PLAYER_NOT_FOUND.getMinedown(pd.getLanguage(), player).replace(
+                            "player", args[1]
+                    ).toComponent());
+                    break;
+                }
+                PlotMemberGroup group = plot.getPlayerGroup(playerUUID.get());
+                player.sendMessage(Lang.PLOT_GROUP_MEMBER_QUERY.getMinedown(pd.getLanguage(), player).replace(
+                        "player", args[1],
+                        "group", group.getGroupId().getGroupName()
+                ).toComponent());
+            }
+
+            case "setpermission" ->{
+                if(args.length != 4){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] +" [group] [permission] [value]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                SubdivisionData subdivisionData = plot.getChunkData(ChunkKey.fromChunk(player.getChunk())).getSubdivision();
+                PlotMemberGroup group = plot.getGroup(args[1]);
+                if(group == null){
+                    player.sendMessage(Lang.PLOT_GROUP_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                PlotPermission plotPermission = PlotPermission.findByName(args[2]);
+                if(plotPermission == null){
+                    player.sendMessage(Lang.PLOT_PERMISSION_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                switch (args[3].toLowerCase()){
+                    case "true" -> {
+                        plot.setPermission(subdivisionData, group, plotPermission, true);
+                    }
+                    case "false" -> {
+                        plot.setPermission(subdivisionData, group, plotPermission, false);
+                    }
+                    case "delete" -> {
+                        plot.unsetPermission(subdivisionData, group, plotPermission);
+                    }
+                    default -> {
+                        player.sendMessage(Lang.PLOT_PERMISSION_VALUE_INCORRECT.getComponent(pd.getLanguage(), player));
+                        break main;
+                    }
+                }
+                plot.persist();
+                player.sendMessage(Lang.PLOT_PERMISSION_UPDATED.getComponent(pd.getLanguage(),player));
+            }
+
+            case "listpermissions" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + " [group]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                SubdivisionData subdivisionData = plot.getChunkData(ChunkKey.fromChunk(player.getChunk())).getSubdivision();
+                PlotMemberGroup group = plot.getGroup(args[1]);
+                if(group == null){
+                    player.sendMessage(Lang.PLOT_GROUP_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                player.sendMessage(Lang.PLOT_PERMISSION_LIST.getMinedown(pd.getLanguage(), player).replace(
+                        "group", group.getGroupId().getGroupName(),
+                        "subdivision", subdivisionData.getName()
+                ).toComponent());
+                for(PlotPermission permission : PlotPermission.values()){
+                    SubdivisionData[] definedInSubdivision = new SubdivisionData[1];
+                    PlotMemberGroup[] definedInGroup = new PlotMemberGroup[1];
+                    boolean value = plot.resolvePermission(subdivisionData, group, permission, (s, g) -> {
+                        definedInSubdivision[0] = s;
+                        definedInGroup[0] =  g;
+                    });
+                    player.sendMessage(Lang.PLOT_PERMISSION_ENTRY.getMinedown(pd.getLanguage(), player).replace(
+                            "permission", permission.name().toLowerCase(),
+                            "value", value ? Lang.YES.getRawString(pd.getLanguage(), player) : Lang.NO.getRawString(pd.getLanguage(), player),
+                            "valueColor", value ? "green" : "red",
+                            "subdivision", definedInSubdivision[0] != null ? definedInSubdivision[0].getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player),
+                            "group", definedInGroup[0] != null ? definedInGroup[0].getGroupId().getGroupName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
+                    ).toComponent());
+                }
+            }
+
+            case "sethome" ->{
+                if(args.length != 1){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0]
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                if(plot == null) break;
+                plot.setHome(player.getLocation());
+                plot.persist();
+                player.sendMessage(Lang.HOME_SET.getComponent(pd.getLanguage(), player));
             }
 
             case "reloaddata" ->{
