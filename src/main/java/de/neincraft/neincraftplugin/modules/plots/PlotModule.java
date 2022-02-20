@@ -1,7 +1,8 @@
 package de.neincraft.neincraftplugin.modules.plots;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
-import de.neincraft.neincraftplugin.NeincraftUtils;
+import de.neincraft.neincraftplugin.modules.plots.protection.PlotProtection;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
 import de.neincraft.neincraftplugin.modules.commands.InjectCommand;
@@ -25,6 +26,7 @@ public class PlotModule extends Module {
 
     private List<Plot> loadedPlots = new ArrayList<>();
     private BluemapIntegration bluemapIntegration;
+    private PlotProtection plotProtection;
 
     @InjectCommand("plot")
     private PlotCommand plotCommand;
@@ -47,6 +49,7 @@ public class PlotModule extends Module {
                 }
             }, 200, 200);
         }
+        plotProtection = new PlotProtection();
         return true;
     }
 
@@ -82,9 +85,9 @@ public class PlotModule extends Module {
         return loadedPlots.stream().filter(plot -> plot.getPlotData().getId() == plotId).findAny();
     }
 
+    @SuppressWarnings("deprecated")
     public boolean isPublicWorld(World w){
-        //TODO: Public world config
-        return true;
+        return w.getGameRuleValue("isPlotWorld").equalsIgnoreCase("true");
     }
 
     public int getAvailablePlots(PlayerData pd, boolean includeBonus){

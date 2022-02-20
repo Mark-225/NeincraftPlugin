@@ -174,7 +174,7 @@ public class Plot {
         group.getMembers().add(player);
     }
 
-    private PlotSettingsEntry getSettingsEntry(SubdivisionData subdivisionData, PlotSetting setting){
+    public PlotSettingsEntry getSettingsEntry(SubdivisionData subdivisionData, PlotSetting setting){
         if(setting == null || subdivisionData == null)
             return null;
         for(PlotSettingsEntry entry : subdivisionData.getSettings()){
@@ -184,20 +184,16 @@ public class Plot {
         return null;
     }
 
-    public PlotSettingsEntry getSettingsEntry(String subdivision, PlotSetting setting){
-        return getSettingsEntry(getSubdivision(subdivision), setting);
-    }
-
-    public boolean resolveSettingsValue(String subdivision, PlotSetting setting, Consumer<String> subdivisionCallback){
+    public boolean resolveSettingsValue(SubdivisionData subdivision, PlotSetting setting, Consumer<SubdivisionData> subdivisionCallback){
         PlotSettingsEntry entry = getSettingsEntry(subdivision, setting);
-        if(entry == null && !subdivision.equalsIgnoreCase("main"))
-            return resolveSettingsValue("main", setting, subdivisionCallback);
+        if(entry == null && !subdivision.getName().equalsIgnoreCase("main"))
+            return resolveSettingsValue(getSubdivision("main"), setting, subdivisionCallback);
         if(subdivisionCallback != null)
             subdivisionCallback.accept(entry != null ? subdivision : null);
         return entry != null ? entry.getValue() : setting.getDefaultValue();
     }
 
-    public boolean resolveSettingsValue(String subdivision, PlotSetting setting){
+    public boolean resolveSettingsValue(SubdivisionData subdivision, PlotSetting setting){
         return resolveSettingsValue(subdivision, setting, null);
     }
 

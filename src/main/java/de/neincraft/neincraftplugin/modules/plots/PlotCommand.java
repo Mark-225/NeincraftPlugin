@@ -1,6 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots;
 
-import de.neincraft.neincraftplugin.NeincraftUtils;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.commands.NeincraftCommand;
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
@@ -14,7 +14,6 @@ import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
-import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import de.neincraft.neincraftplugin.util.Lang;
 import de.themoep.minedown.adventure.MineDown;
 import net.kyori.adventure.text.Component;
@@ -372,14 +371,14 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 player.sendMessage(Lang.PLOT_SETTINGS_LIST.getComponent(pd.getLanguage(), player));
                 for(PlotSetting setting : PlotSetting.values()){
                     boolean value;
-                    String[] definedIn = new String[1];
-                    value = plot.resolveSettingsValue(subdivisionData.getName(), setting, s -> definedIn[0] = s);
+                    SubdivisionData[] definedIn = new SubdivisionData[1];
+                    value = plot.resolveSettingsValue(subdivisionData, setting, s -> definedIn[0] = s);
                     player.sendMessage(Lang.PLOT_SETTINGS_ENTRY.getMinedown(pd.getLanguage(), player).replace(
                             "setting", setting.name().toLowerCase(),
                             "description", setting.getDescription().getRawString(pd.getLanguage(), player),
                             "value", value ? Lang.YES.getRawString(pd.getLanguage(), player) : Lang.NO.getRawString(pd.getLanguage(), player),
                             "valueColor", value ? "green" : "red",
-                            "defined", definedIn[0] != null ? definedIn[0] : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
+                            "defined", definedIn[0] != null ? definedIn[0].getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
                     ).toComponent());
                 }
             }

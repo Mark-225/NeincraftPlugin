@@ -99,7 +99,13 @@ public enum Lang {
     PLOT_PERMISSION_VALUE_INCORRECT("&red&Ungültiger Wert für Berechtigung. Nutze \"true\", \"false\" oder \"delete\"", "&red&Invalid value for plot permission. Use \"true\", \"false\" or \"delete\""),
     PLOT_PERMISSION_NOT_FOUND("&red&Es existiert keine Berechtigung mit diesem Namen!", "&red&A permission with this name does not exist!"),
     PLOT_PERMISSION_LIST("&yellow&Die folgenden Berechtigungen sind für die Gruppe %group% im Bereich %subdivision% konfiguriert:", "&yellow&The following permissions are configured for group %group% in subdivision %subdivision%:"),
-    PLOT_PERMISSION_ENTRY("[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%group% - %subdivision%](color=yellow)", "[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%group% - %subdivision%](color=yellow)");
+    PLOT_PERMISSION_ENTRY("[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%group% - %subdivision%](color=yellow)", "[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%group% - %subdivision%](color=yellow)"),
+
+    //protection
+    PLOT_ENTER("&yellow&Du betrittst das Grundstück [%plot%](color=white) von [%owner%](color=white)", "&yellow&You are entering the plot [%plot%](color=white) by [%owner%](color=white)"),
+    PLOT_LEAVE("&green&Du bist nun auf freiem Gebiet", "&green&You are now on unclaimed land"),
+    PLOT_CANT_ENTER("&red&Du darfst diesen Bereich nicht betreten!", "&red&You are not allowed to enter this area!"),
+    PLOT_CANT_MODIFY("&red&Das darfst du hier nicht tun!", "&red&You are not allowed to do that here!");
 
 
     private final String german;
@@ -132,4 +138,17 @@ public enum Lang {
     public Component getComponent(@Nullable PlayerLanguage language, @Nullable Player player){
         return getMinedown(language, player).toComponent();
     }
+
+    public String getRawString(@Nullable Player player){
+        return getRawString(NeincraftUtils.getPlayerLanguage(player), player);
+    }
+
+    public MineDown getMinedown(@Nullable Player player){
+        return getMinedown(NeincraftUtils.getPlayerLanguage(player), player);
+    }
+
+    public Component getComponent(@Nullable Player player){
+        return getComponent(NeincraftUtils.getPlayerLanguage(player), player);
+    }
+
 }

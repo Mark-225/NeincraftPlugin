@@ -7,12 +7,13 @@ import java.util.Arrays;
 public enum PlotSetting {
     SPAWN_MONSTERS(true),
     SPAWN_ANIMALS(true),
+    FIRE_SPREAD(false),
+    ALLOW_EXPLOSIONS(false),
     ALLOW_PVP(false, false),
     FALL_DAMAGE(true, false),
     DROWNING_DAMAGE(true, false),
-    ALLOW_TNT(false),
-    ALLOW_MOB_GRIEFING(false),
-    KEEP_INVENTORY(false, false);
+    KEEP_INVENTORY(false, false),
+    ALLOW_ENTER(true, false);
 
     private final boolean defaultValue;
     private final boolean userEditable;

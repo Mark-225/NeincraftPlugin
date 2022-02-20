@@ -1,0 +1,493 @@
+package de.neincraft.neincraftplugin.modules.plots.protection;
+
+import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
+import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import de.neincraft.neincraftplugin.NeincraftPlugin;
+import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.plots.Plot;
+import de.neincraft.neincraftplugin.modules.plots.PlotModule;
+import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
+import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
+import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
+import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
+import io.papermc.paper.event.block.PlayerShearBlockEvent;
+import io.papermc.paper.event.player.PlayerFlowerPotManipulateEvent;
+import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.Container;
+import org.bukkit.block.DoubleChest;
+import org.bukkit.block.data.type.Lectern;
+import org.bukkit.entity.*;
+import org.bukkit.entity.minecart.HopperMinecart;
+import org.bukkit.entity.minecart.StorageMinecart;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.*;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.hanging.HangingBreakByEntityEvent;
+import org.bukkit.event.hanging.HangingPlaceEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.event.vehicle.VehicleDestroyEvent;
+import org.bukkit.event.world.StructureGrowEvent;
+import org.spigotmc.event.entity.EntityMountEvent;
+
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+public class PlotProtection implements Listener {
+
+    public final NamespacedKey public_container = new NamespacedKey(NeincraftPlugin.getInstance(), "public_access");
+
+    private Map<ChunkKey, Optional<Plot>> plotCache = new HashMap<>();
+    private PlotModule plotModule;
+    private List<UUID> playersAtIllegalLocation = new ArrayList<>();
+
+
+    public PlotProtection(){
+        Module.getInstance(PlotModule.class).ifPresent(pm ->{
+            plotModule = pm;
+            Bukkit.getPluginManager().registerEvents(this, NeincraftPlugin.getInstance());
+
+            Bukkit.getScheduler().runTaskTimer(NeincraftPlugin.getInstance(), () ->{
+                playersAtIllegalLocation.removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
+                for(Player p : Bukkit.getOnlinePlayers()){
+                    Optional<Plot> plot = getFromCache(p.getChunk());
+                    if(plot.isPresent() && !p.hasPermission("neincraft.plots.bypass.enter") && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER)){
+                        if(playersAtIllegalLocation.contains(p.getUniqueId()))
+                            p.teleport(p.getWorld().getSpawnLocation().add(0.5, 0, 0.5));
+                        else
+                            playersAtIllegalLocation.add(p.getUniqueId());
+                    }
+                    playersAtIllegalLocation.remove(p.getUniqueId());
+                }
+            }, 100, 100);
+        });
+    }
+
+    private Optional<Plot> getFromCache(ChunkKey chunk){
+        return plotCache.computeIfAbsent(chunk, key -> plotModule.getPlotAtChunk(key));
+    }
+
+    private Optional<Plot> getFromCache(Chunk chunk){
+        return getFromCache(ChunkKey.fromChunk(chunk));
+    }
+
+    private boolean canPropagate(Plot from, Plot to){
+        if(from == to || to == null) return true;
+        if(from == null) return false;
+        return from.getPlotData().getOwner().equals(to.getPlotData().getOwner());
+    }
+
+    @EventHandler
+    public void onTickStart(ServerTickStartEvent event){
+        plotCache.clear();
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event){
+        if(event.getFrom().getChunk() == event.getTo().getChunk()) return;
+        Optional<Plot> newPlot = getFromCache(event.getTo().getChunk());
+        Optional<Plot> oldPlot = getFromCache(event.getFrom().getChunk());
+        if(newPlot.equals(oldPlot)) return;
+        newPlot.ifPresentOrElse(
+                plot -> {
+                    if(!event.getPlayer().hasPermission("neincraft.plots.bypass.enter") && !plot.resolveSettingsValue(plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER)){
+                        event.setCancelled(true);
+                        event.getPlayer().sendActionBar(Lang.PLOT_CANT_ENTER.getComponent(event.getPlayer()));
+                        return;
+                    }
+                    event.getPlayer().sendActionBar(Lang.PLOT_ENTER.getMinedown(event.getPlayer()).replace(
+                            "plot", plot.getPlotData().getName(),
+                            "owner", plot.isServerPlot() ? "Server" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner())
+                    ).toComponent());
+                },
+                () -> event.getPlayer().sendActionBar(Lang.PLOT_LEAVE.getComponent(event.getPlayer()))
+        );
+    }
+
+    private void handleBasicPlayerEvent(Player player, PlotPermission requiredPermission, Chunk changedChunk, Consumer<Boolean> cancel){
+        if(player.hasPermission("neincraft.plots.bypass." + requiredPermission.getBypassPermission())) return;
+        Optional<Plot> oPlot = getFromCache(changedChunk);
+        if(oPlot.isEmpty()) return;
+        Plot plot = oPlot.get();
+        if(!plot.resolvePermission(plot.getChunkData(ChunkKey.fromChunk(changedChunk)).getSubdivision(), plot.getPlayerGroup(player.getUniqueId()), requiredPermission)){
+            cancel.accept(true);
+            player.sendMessage(Lang.PLOT_CANT_MODIFY.getComponent(player));
+        }
+    }
+
+    private void handleBatchChangeEvent(Chunk sourceChunk, List<Block> blocks, boolean removeFromList, Consumer<Boolean> cancel){
+        Optional<Plot> sourcePlot = getFromCache(sourceChunk);
+        if(removeFromList){
+            blocks.removeIf(block -> !canPropagate(sourcePlot.orElse(null), getFromCache(block.getChunk()).orElse(null)));
+        }else{
+            if(blocks.stream().anyMatch(block -> !canPropagate(sourcePlot.orElse(null), getFromCache(block.getChunk()).orElse(null))))
+                cancel.accept(true);
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onHangingBreak(HangingBreakByEntityEvent event){
+        if(event.getRemover() instanceof Player player){
+            handleBasicPlayerEvent(player, PlotPermission.BUILD, event.getEntity().getChunk(), event::setCancelled);
+        }
+    }
+
+    @EventHandler
+    public void onHangingPlace(HangingPlaceEvent event){
+        if(event.getPlayer() == null) return;
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getEntity().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onBucketEmpty(PlayerBucketEmptyEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onBucketFill(PlayerBucketFillEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onItemFrameChange(PlayerItemFrameChangeEvent event){
+        if(event.getAction() == PlayerItemFrameChangeEvent.ItemFrameChangeAction.ROTATE){
+            handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getItemFrame().getChunk(), event::setCancelled);
+        }else{
+            handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getItemFrame().getChunk(), event::setCancelled);
+        }
+    }
+
+    @EventHandler
+    public void onArmorStandManipulate(PlayerArmorStandManipulateEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getRightClicked().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onHarvestBlock(PlayerHarvestBlockEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getHarvestedBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onTrampleSoil(PlayerInteractEvent event){
+        if(event.getClickedBlock() == null) return;
+        if(event.getAction() != Action.PHYSICAL || event.getClickedBlock().getType() != Material.FARMLAND) return;
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getClickedBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onPlayerTrade(PlayerInteractEntityEvent event){
+        if(!(event.getRightClicked() instanceof AbstractVillager)) return;
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.TRADE_VILLAGERS, event.getRightClicked().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onShearEntity(PlayerShearEntityEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.SHEAR_ENTITIES, event.getEntity().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onShearBlock(PlayerShearBlockEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onInteractBlocks(PlayerInteractEvent event){
+        if(event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) return;
+        Material material = event.getClickedBlock().getType();
+        PlotPermission permission = null;
+        if(Tag.WOODEN_BUTTONS.isTagged(material)){
+            permission = PlotPermission.USE_WOOD_BUTTONS;
+        }else if(material == Material.STONE_BUTTON){
+            permission = PlotPermission.USE_STONE_BUTTONS;
+        }else if(material == Material.LEVER){
+            permission = PlotPermission.USE_LEVERS;
+        }else if(material == Material.REDSTONE_WIRE || material == Material.COMPARATOR || material == Material.REPEATER){
+            permission = PlotPermission.USE_REDSTONE_COMPONENTS;
+        }else if(material == Material.JUKEBOX || material == Material.NOTE_BLOCK){
+            permission = PlotPermission.USE_JUKEBOX;
+        }else if(Tag.ANVIL.isTagged(material)){
+            permission = PlotPermission.USE_ANVILS;
+        }else if(material == Material.CRAFTING_TABLE){
+            permission = PlotPermission.USE_CRAFTING_TABLE;
+        }else if(material == Material.ENDER_CHEST){
+            permission = PlotPermission.USE_ENDERCHESTS;
+        }else if(Tag.WOODEN_DOORS.isTagged(material)){
+            permission = PlotPermission.USE_WOODEN_DOORS;
+        }else if(Tag.FENCE_GATES.isTagged(material) || Tag.WOODEN_TRAPDOORS.isTagged(material)){
+            permission = PlotPermission.USE_OTHER_OPENABLES;
+        }else if(material == Material.LECTERN){
+            permission = ((Lectern) event.getClickedBlock().getBlockData()).hasBook() ? PlotPermission.READ_LECTERN :PlotPermission.EDIT_LECTERN;
+        }else if(material == Material.BEEHIVE){
+            permission = PlotPermission.HARVEST_HIVES;
+        }
+
+        if(permission != null)
+            handleBasicPlayerEvent(event.getPlayer(), permission, event.getClickedBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onPlayerTakeBook(PlayerTakeLecternBookEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.EDIT_LECTERN, event.getLectern().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onProjectileThrow(PlayerLaunchProjectileEvent event){
+        PlotPermission permission = null;
+        if(Tag.ENTITY_TYPES_ARROWS.isTagged(event.getProjectile().getType())){
+            permission = PlotPermission.FIRE_ARROWS;
+        }else{
+            permission = PlotPermission.THROW_PROJECTILES;
+        }
+        handleBasicPlayerEvent(event.getPlayer(), permission, event.getPlayer().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onProjectileHit(ProjectileHitEvent event){
+        if(event.getEntity().getShooter() == null || !(event.getEntity().getShooter() instanceof Player)) return;
+        Chunk chunk = event.getHitBlock() != null ? event.getHitBlock().getChunk() : event.getHitEntity() != null ? event.getHitEntity().getChunk() : event.getEntity().getChunk();
+        handleBasicPlayerEvent((Player) event.getEntity().getShooter(), Tag.ENTITY_TYPES_ARROWS.isTagged(event.getEntity().getType()) ? PlotPermission.FIRE_ARROWS : PlotPermission.THROW_PROJECTILES, chunk, event::setCancelled);
+    }
+
+    @EventHandler
+    public void onEntityDamaged(EntityDamageByEntityEvent event){
+        Player player = null;
+        if(event.getDamager() instanceof Player p)
+            player = p;
+        else if(event.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player p)
+            player = p;
+        if(player != null)
+            handleBasicPlayerEvent(player, PlotPermission.HURT_NON_MONSTERS, event.getEntity().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onOpenContainer(InventoryOpenEvent event){
+        if(!(event.getPlayer() instanceof Player)) return;
+        Player player = (Player) event.getPlayer();
+        if(event.getInventory().getHolder() instanceof Container container){
+            handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, container.getChunk(), event::setCancelled);
+        }else if(event.getInventory().getHolder() instanceof DoubleChest doubleChest && doubleChest.getLeftSide() instanceof Container leftContainer && doubleChest.getRightSide() instanceof Container rightContainer){
+            handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, leftContainer.getChunk(), event::setCancelled);
+            handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, rightContainer.getChunk(), event::setCancelled);
+        }else if(event.getInventory().getHolder() instanceof Entity entity && (event.getInventory().getHolder() instanceof StorageMinecart || event.getInventory().getHolder() instanceof HopperMinecart || event.getInventory().getHolder() instanceof ChestedHorse)){
+            handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, entity.getChunk(), event::setCancelled);
+        }
+    }
+
+    @EventHandler
+    public void onMountEntity(EntityMountEvent event){
+        if(event.getEntity() instanceof Player player && event.getMount() instanceof Vehicle vehicle){
+            handleBasicPlayerEvent(player, PlotPermission.USE_RIDEABLES, vehicle.getChunk(), event::setCancelled);
+        }
+    }
+
+    @EventHandler
+    public void onEntityPlace(EntityPlaceEvent event){
+        if(event.getPlayer() == null) return;
+        PlotPermission permission;
+        if(event.getEntity() instanceof Vehicle){
+            permission = PlotPermission.PLACE_RIDEABLES;
+        }else{
+            permission = PlotPermission.BUILD;
+        }
+        handleBasicPlayerEvent(event.getPlayer(), permission, event.getEntity().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onVehicleDestroy(VehicleDestroyEvent event){
+        if(event.getAttacker() instanceof Player player){
+            handleBasicPlayerEvent(player, PlotPermission.PLACE_RIDEABLES, event.getVehicle().getChunk(), event::setCancelled);
+        }
+    }
+
+    @EventHandler
+    public void onSaddleEntity(PlayerInteractEntityEvent event){
+        if(!(event.getRightClicked() instanceof AbstractHorse) && !(event.getRightClicked() instanceof Pig)) return;
+        if(event.getPlayer().getEquipment().getItem(event.getHand()).getType() != Material.SADDLE) return;
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.SADDLE_ENTITIES, event.getRightClicked().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onLead(PlayerLeashEntityEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.USE_LEADS, event.getEntity().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onFertilize(BlockFertilizeEvent event){
+        if(event.getPlayer() == null) return;
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onFlowerPotEdit(PlayerFlowerPotManipulateEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getFlowerpot().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onHitDragonEgg(PlayerInteractEvent event){
+        if((event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock() != null && event.getClickedBlock().getType() == Material.DRAGON_EGG)
+            handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getClickedBlock().getChunk(), event::setCancelled);
+    }
+
+
+    //global
+
+    @EventHandler
+    public void onStructureGrow(StructureGrowEvent event){
+        Optional<Plot> sourcePlot = getFromCache(event.getLocation().getChunk());
+        event.getBlocks().removeIf(bs -> !canPropagate(sourcePlot.orElse(null), getFromCache(bs.getChunk()).orElse(null)));
+    }
+
+    @EventHandler
+    public void onBlockSpread(BlockSpreadEvent event){
+        if(!canPropagate(getFromCache(event.getSource().getChunk()).orElse(null), getFromCache(event.getBlock().getChunk()).orElse(null)))
+            event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onSpongeAbsorb(SpongeAbsorbEvent event){
+        Optional<Plot> sourcePlot = getFromCache(event.getBlock().getChunk());
+        event.getBlocks().removeIf(bs -> !canPropagate(sourcePlot.orElse(null), getFromCache(bs.getChunk()).orElse(null)));
+    }
+
+    @EventHandler
+    public void onBlockFromTo(BlockFromToEvent event){
+        if(!canPropagate(getFromCache(event.getBlock().getChunk()).orElse(null), getFromCache(event.getToBlock().getChunk()).orElse(null)))
+            event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onBlockLand(EntityChangeBlockEvent event){
+        if(event.getTo() == Material.AIR) return;
+        if(event.getEntity() instanceof FallingBlock fallingBlock){
+            Location origin = fallingBlock.getOrigin();
+            if(origin == null) return;
+            if(!canPropagate(getFromCache(origin.getChunk()).orElse(null), getFromCache(fallingBlock.getChunk()).orElse(null)))
+                event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event){
+        final boolean isPublicWorld = plotModule.isPublicWorld(event.getEntity().getWorld());
+        Optional<Plot> sourcePlot = getFromCache(event.getEntity().getOrigin().getChunk());
+        Optional<Plot> targetPlot = getFromCache(event.getEntity().getChunk());
+        if(!sourcePlot.equals(targetPlot) || (targetPlot.isPresent() && !targetPlot.get().resolveSettingsValue(targetPlot.get().getChunkData(ChunkKey.fromChunk(event.getEntity().getChunk())).getSubdivision(), PlotSetting.ALLOW_EXPLOSIONS))){
+            event.setCancelled(true);
+            return;
+        }
+        event.blockList().removeIf(block -> {
+            Optional<Plot> plot = getFromCache(block.getChunk());
+            if(plot.isEmpty()) return isPublicWorld;
+            boolean canPropagate = canPropagate(sourcePlot.orElse(null), plot.orElse(null));
+            return !canPropagate || !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(block.getChunk())).getSubdivision(), PlotSetting.ALLOW_EXPLOSIONS);
+        });
+    }
+
+    @EventHandler
+    public void onBlockExplode(BlockExplodeEvent event){
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event){
+        if(event.getCause() != EntityDamageEvent.DamageCause.ENTITY_EXPLOSION && event.getCause() != EntityDamageEvent.DamageCause.BLOCK_EXPLOSION) return;
+        Optional<Plot> plot = getFromCache(event.getEntity().getChunk());
+        if((plot.isEmpty() && plotModule.isPublicWorld(event.getEntity().getWorld())) ||
+                (plot.isPresent() && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(event.getEntity().getChunk())).getSubdivision(), PlotSetting.ALLOW_EXPLOSIONS))){
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent event){
+        List<Block> previousBlocks = event.getBlocks();
+        List<Block> extendedBlocks = previousBlocks.stream().map(block -> block.getLocation().add(event.getDirection().getDirection()).getBlock()).toList();
+        handleBatchChangeEvent(event.getBlock().getChunk(), Stream.concat(previousBlocks.stream(), extendedBlocks.stream()).toList(), false, event::setCancelled);
+    }
+
+    @EventHandler
+    public void onPistonRetract(BlockPistonRetractEvent event){
+        List<Block> previousBlocks = event.getBlocks();
+        List<Block> retractedBlocks = previousBlocks.stream().map(block -> block.getLocation().add(event.getDirection().getDirection()).getBlock()).toList();
+        handleBatchChangeEvent(event.getBlock().getChunk(), Stream.concat(previousBlocks.stream(), retractedBlocks.stream()).toList(), false, event::setCancelled);
+    }
+
+    @EventHandler
+    public void onMobSpawn(CreatureSpawnEvent event){
+        if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) return;
+        PlotSetting setting = null;
+        if(event.getEntity() instanceof Monster){
+            setting = PlotSetting.SPAWN_MONSTERS;
+        }else if(event.getEntity() instanceof Animals){
+            setting = PlotSetting.SPAWN_ANIMALS;
+        }
+        if(setting == null) return;
+        Optional<Plot> plot = getFromCache(event.getLocation().getChunk());
+        if(plot.isEmpty()) return;
+        if(!plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(event.getLocation().getChunk())).getSubdivision(), setting))
+            event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPVP(EntityDamageByEntityEvent event){
+        if(!(event.getEntity() instanceof Player)) return;
+        Player attacker = null;
+        if(event.getDamager() instanceof Player p){
+            attacker = p;
+        }else if(event.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player p){
+            attacker = p;
+        }
+        if(attacker == null) return;
+        if(attacker.hasPermission("neincraft.plots.bypass.pvp")) return;
+        Optional<Plot> plot = getFromCache(event.getEntity().getChunk());
+        if(plot.isEmpty() || !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(event.getEntity().getChunk())).getSubdivision(), PlotSetting.ALLOW_PVP)){
+            event.setCancelled(true);
+            attacker.sendActionBar(Lang.PLOT_CANT_MODIFY.getComponent(attacker));
+        }
+    }
+
+    @EventHandler
+    public void onElementalDamage(EntityDamageEvent event){
+        if(event.getEntity() instanceof Player player){
+            PlotSetting setting = null;
+            if(event.getCause() == EntityDamageEvent.DamageCause.DROWNING){
+                setting = PlotSetting.DROWNING_DAMAGE;
+            }else if(event.getCause() == EntityDamageEvent.DamageCause.FALL){
+                setting = PlotSetting.FALL_DAMAGE;
+            }
+            if(setting == null) return;
+            Optional<Plot> plot = getFromCache(player.getChunk());
+            if(plot.isPresent() && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(player.getChunk())).getSubdivision(), setting))
+                event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onFireSpread(BlockSpreadEvent event){
+        if(!Tag.FIRE.isTagged(event.getSource().getType())) return;
+        Optional<Plot> plot = getFromCache(event.getSource().getChunk());
+        Optional<Plot> targetPlot = getFromCache(event.getBlock().getChunk());
+        if(plot.isEmpty() || targetPlot.isEmpty() ||
+                plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(event.getSource().getChunk())).getSubdivision(), PlotSetting.FIRE_SPREAD) ||
+                targetPlot.get().resolveSettingsValue(targetPlot.get().getChunkData(ChunkKey.fromChunk(event.getBlock().getChunk())).getSubdivision(), PlotSetting.FIRE_SPREAD))
+            event.setCancelled(true);
+    }
+
+
+
+}

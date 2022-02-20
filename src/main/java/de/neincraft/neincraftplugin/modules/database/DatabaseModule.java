@@ -2,16 +2,14 @@ package de.neincraft.neincraftplugin.modules.database;
 
 import com.zaxxer.hikari.HikariDataSource;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
-import de.neincraft.neincraftplugin.NeincraftUtils;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
-import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -25,7 +23,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Level;
 
 @NeincraftModule(
@@ -53,7 +50,13 @@ public class DatabaseModule extends Module {
         if(List.of("url", "user", "password").stream().anyMatch(key -> !dbConfig.contains(key) || !dbConfig.isString(key))){
             getLogger().log(Level.WARNING, "Could not find all necessary values in database config.");
         }
-        initSessionFactory(dbConfig.getString("url"), dbConfig.getString("user"), dbConfig.getString("password"));
+        String user = dbConfig.getString("user");
+        String password = dbConfig.getString("password");
+        if("root".equals(user) || "".equals(password)){
+            getLogger().log(Level.SEVERE, "You are using the root user or an empty password to connect to the database! This is extremely unsafe in a production environment. It is recommended to create a separate user with access to only one database for this plugin and configure it in the database.yml config file!\n" +
+                    "(You can ignore this message if you are in a testing environment)");
+        }
+        initSessionFactory(dbConfig.getString("url"), user, password);
         return true;
     }
 

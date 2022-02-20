@@ -10,7 +10,7 @@ import de.bluecolored.bluemap.api.marker.MarkerSet;
 import de.bluecolored.bluemap.api.marker.Shape;
 import de.bluecolored.bluemap.api.marker.ShapeMarker;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
-import de.neincraft.neincraftplugin.NeincraftUtils;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import org.bukkit.Bukkit;

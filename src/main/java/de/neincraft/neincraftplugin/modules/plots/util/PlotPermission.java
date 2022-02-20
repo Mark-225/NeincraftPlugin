@@ -4,38 +4,49 @@ import java.util.Arrays;
 
 public enum PlotPermission {
 
-    BUILD(true, true, false),
-    TELEPORT_HOME(true, true, false),
-    USE_WOOD_BUTTONS(true, true, true),
-    USE_STONE_BUTTONS(true, true, false),
-    USE_LEVERS(true, true, false),
-    OPEN_CONTAINERS(true, true, false),
-    USE_RIDEABLES(true, true, false),
-    PLACE_RIDEABLES(true, true, false),
-    THROW_PROJECTILES(true, true, false),
-    FIRE_ARROWS(true, true, false),
-    INTERACT_WITH_ENTITIES(true, true, false),
-    HURT_NON_MONSTERS(true, true, false),
-    USE_WOODEN_DOORS(true, true, true),
-    USE_OTHER_OPENABLES(true, true, false),
-    USE_ANVILS(true, true, false),
-    USE_ENDERCHESTS(true, true, true),
-    USE_CRAFTING_TABLE(true, true, true),
-    USE_REDSTONE_COMPONENTS(true, true, false),
-    USE_LEADS(true, true, false),
-    USE_JUKEBOX(true, true, false),
-    READ_LECTERN(true, true, true),
-    EDIT_LECTERN(true, true, false),
-    HARVEST_HIVES(true, true, false);
+    BUILD(true, true, false, "build"),
+    TELEPORT_HOME(true, true, false, "home"),
+    USE_WOOD_BUTTONS(true, true, true, "wood_buttons"),
+    USE_STONE_BUTTONS(true, true, false, "stone_buttons"),
+    USE_LEVERS(true, true, false, "levers"),
+    OPEN_CONTAINERS(true, true, false, "containers"),
+    USE_RIDEABLES(true, true, false, "rideables"),
+    PLACE_RIDEABLES(true, true, false, "place_rideables"),
+    THROW_PROJECTILES(true, true, false, "projectiles"),
+    FIRE_ARROWS(true, true, false, "arrows"),
+    TRADE_VILLAGERS(true, true, false, "trade_villagers"),
+    SHEAR_ENTITIES(true, true, false, "shear_entities"),
+    SADDLE_ENTITIES(true, true, false, "saddle_entities"),
+    HURT_NON_MONSTERS(true, true, false, "hurt_non_monsters"),
+    USE_WOODEN_DOORS(true, true, true, "wooden_doors"),
+    USE_OTHER_OPENABLES(true, true, false, "openables"),
+    USE_ANVILS(true, true, false, "anvils"),
+    USE_ENDERCHESTS(true, true, true, "enderchests"),
+    USE_CRAFTING_TABLE(true, true, true, "crafting_table"),
+    USE_REDSTONE_COMPONENTS(true, true, false, "redstone_components"),
+    USE_LEADS(true, true, false, "leads"),
+    USE_JUKEBOX(true, true, false, "jukebox"),
+    READ_LECTERN(true, true, true, "read_lectern"),
+    EDIT_LECTERN(true, true, false, "edit_lectern"),
+    HARVEST_HIVES(true, true, false, "harvest_hives");
 
     private boolean ownerDefault;
     private boolean memberDefault;
     private boolean publicDefault;
+    private String bypassPermission;
 
     PlotPermission(boolean ownerDefault, boolean memberDefault, boolean publicDefault) {
         this.ownerDefault = ownerDefault;
         this.memberDefault = memberDefault;
         this.publicDefault = publicDefault;
+        this.bypassPermission = "other";
+    }
+
+    PlotPermission(boolean ownerDefault, boolean memberDefault, boolean publicDefault, String bypassPermission) {
+        this.ownerDefault = ownerDefault;
+        this.memberDefault = memberDefault;
+        this.publicDefault = publicDefault;
+        this.bypassPermission = bypassPermission;
     }
 
     public boolean getOwnerDefault() {
@@ -48,6 +59,10 @@ public enum PlotPermission {
 
     public boolean getPublicDefault() {
         return publicDefault;
+    }
+
+    public String getBypassPermission() {
+        return bypassPermission;
     }
 
     public static PlotPermission findByName(String name){
