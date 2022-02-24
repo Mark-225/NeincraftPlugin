@@ -29,7 +29,7 @@ public class PlotData implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<SubdivisionData> subdivisions;
 
-    @OneToMany(mappedBy = "groupId.plot", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "groupId.plot", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<PlotMemberGroup> groups;
 

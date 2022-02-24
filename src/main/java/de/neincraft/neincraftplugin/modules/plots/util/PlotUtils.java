@@ -2,12 +2,25 @@ package de.neincraft.neincraftplugin.modules.plots.util;
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
+import com.flowpowered.math.vector.Vector3i;
+import de.neincraft.neincraftplugin.NeincraftPlugin;
+import de.neincraft.neincraftplugin.modules.plots.Plot;
+import de.neincraft.neincraftplugin.modules.plots.dto.ChunkData;
+import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
+import org.bukkit.*;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public abstract class PlotUtils {
+
+    private static ConcurrentHashMap<UUID, BukkitTask> visualizationTasks = new ConcurrentHashMap<>();
 
     public static List<List<Vector2i>> areaToPolygons(Set<Vector2i> chunks){
         List<Set<Vector2i>> sectors = findSectors(chunks);
@@ -139,6 +152,75 @@ public abstract class PlotUtils {
             segments.put(start, end);
         }
         return segments;
+    }
+
+    public static void visualize(Plot plot, Player player){
+        if(!player.getWorld().getName().equals(plot.getPlotData().getWorldName())) return;
+        final ChunkKey playerChunk = ChunkKey.fromChunk(player.getChunk());
+        final Set<Vector2i> relevantChunks = plot.getPlotData().getChunks().stream().map(ChunkData::getId).filter(chunk -> playerChunk.simpleDistance(chunk) <= 8).map(ck -> Vector2i.from(ck.getX(), ck.getZ())).collect(Collectors.toCollection(HashSet::new));
+        final World world = player.getWorld();
+        final int height = player.getLocation().getBlockY() + 2;
+        final UUID playerUUID = player.getUniqueId();
+        if(relevantChunks.isEmpty()) return;
+
+        Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () ->{
+            CopyOnWriteArrayList<Vector3i> particleLocations = new CopyOnWriteArrayList<>(createBorderParticles(relevantChunks, Vector2i.from(playerChunk.getX(), playerChunk.getZ()), 8, height));
+            if(visualizationTasks.containsKey(playerUUID) && !visualizationTasks.get(playerUUID).isCancelled()){
+                try{
+                    visualizationTasks.get(playerUUID).cancel();
+                }catch (Exception e){
+                    //
+                }
+            }
+            visualizationTasks.remove(player.getUniqueId());
+            if(particleLocations.isEmpty()) return;
+            final long startTime = System.currentTimeMillis();
+            final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.YELLOW, 3f);
+            BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(NeincraftPlugin.getInstance(), () ->{
+                for(Vector3i loc : particleLocations){
+                    player.spawnParticle(Particle.REDSTONE, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, dustOptions);
+                }
+            }, 5, 20);
+
+            visualizationTasks.put(playerUUID, task);
+            Bukkit.getScheduler().runTaskLaterAsynchronously(NeincraftPlugin.getInstance(), () ->{
+                if(!task.isCancelled()){
+                    try{
+                        task.cancel();
+                    }catch(Exception e){
+                        //
+                    }
+                }
+            }, 120);
+        });
+    }
+
+    private static List<Vector3i> createBorderParticles(Set<Vector2i> chunks, Vector2i center, int radius, int height){
+        Set<Vector2i> displayedChunks = chunks.stream().filter(chunk -> Math.max(Math.abs(chunk.getX() - center.getX()), Math.abs(chunk.getY() - center.getY())) < radius).collect(Collectors.toCollection(HashSet::new));
+        List<Vector3i> borderPreset = IntStream.range(0, 8).boxed().flatMap(integer -> Stream.of(new Vector3i(integer*2, height, 0), new Vector3i(integer*2+1, height+2, 0))).toList();
+        List<Vector3i> vectors = new ArrayList<>();
+        for(Vector2i chunk : displayedChunks){
+            List<Vector3i> thisChunk = new ArrayList<>();
+            if(!chunks.contains(chunk.add(0, -1))){
+                thisChunk.addAll(borderPreset);
+            }
+
+            if(!chunks.contains(chunk.add(-1, 0))){
+                thisChunk.addAll(borderPreset.stream().map(v -> Vector3i.from(0, v.getY(), 16 - v.getX())).toList());
+            }
+
+            if(!chunks.contains(chunk.add(0, 1))){
+                thisChunk.addAll(borderPreset.stream().map(v -> Vector3i.from(16 - v.getX(), v.getY(), 16)).toList());
+            }
+
+            if(!chunks.contains(chunk.add(1, 0))){
+                thisChunk.addAll(borderPreset.stream().map(v -> Vector3i.from(16, v.getY(), v.getX())).toList());
+            }
+            Vector3i chunkVector = Vector3i.from(chunk.getX() * 16, 0, chunk.getY() * 16);
+            vectors.addAll(thisChunk.stream().map(v -> v.add(chunkVector)).toList());
+        }
+
+        return vectors;
     }
 
     public static enum Direction{

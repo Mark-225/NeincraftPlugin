@@ -36,13 +36,13 @@ repositories {
 }
 
 dependencies {
-    //implementation group: 'com.flowpowered', name: 'flow-math', version: '1.0.3' //comment out to allow usage without bluemap
+    implementation group: 'com.flowpowered', name: 'flow-math', version: '1.0.3' //comment out to allow usage without bluemap
     implementation 'org.jetbrains:annotations:22.0.0'
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
     compileOnly 'com.github.BlueMap-Minecraft:BlueMapAPI:1.7.0'
     implementation 'org.reflections:reflections:0.10.2'
     implementation 'com.zaxxer:HikariCP:5.0.1'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+    implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.28'
     implementation 'org.slf4j:slf4j-jdk14:1.7.35'
     implementation group: 'org.hibernate', name: 'hibernate-hikaricp', version: '5.6.1.Final'
     implementation group: 'org.hibernate', name: 'hibernate-core', version: '5.6.1.Final'

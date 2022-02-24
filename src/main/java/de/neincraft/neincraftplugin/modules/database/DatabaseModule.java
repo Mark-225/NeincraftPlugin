@@ -67,12 +67,14 @@ public class DatabaseModule extends Module {
             StandardServiceRegistryBuilder registryBuilder =
                     new StandardServiceRegistryBuilder();
             Map<String, Object> settings = new HashMap<>();
-            settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
+            settings.put(Environment.DRIVER, "com.mysql.cj.jdbc.Driver");
             settings.put(Environment.URL, url);
             settings.put(Environment.USER, user);
             settings.put(Environment.PASS, password);
             settings.put(Environment.HBM2DDL_AUTO, "update");
-            settings.put(Environment.SHOW_SQL, true);
+            settings.put(Environment.SHOW_SQL, false);
+            settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
+            settings.put(Environment.STORAGE_ENGINE, "hibernate.dialect.storage_engine=innodb");
 
             settings.put("hibernate.hikari.connectionTimeout", "20000");
             settings.put("hibernate.hikari.minimumIdle", "10");

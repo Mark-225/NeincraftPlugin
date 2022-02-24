@@ -1,5 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots;
 
+import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.commands.NeincraftCommand;
@@ -19,6 +20,7 @@ import de.themoep.minedown.adventure.MineDown;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -28,11 +30,164 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PlotCommand extends NeincraftCommand implements CommandExecutor, SimpleTabCompleter {
 
     @Override
     public void tabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args, List<String> completions) {
+        if(!(commandSender instanceof Player)) return;
+        Player player = (Player) commandSender;
+        Optional<PlotModule> oPm = Module.getInstance(PlotModule.class);
+        if(oPm.isEmpty()) return;
+        PlotModule pm = oPm.get();
+        boolean adminMode = label.toLowerCase().endsWith("admin");
+        if(args.length == 1){
+            completions.addAll(List.of("info", "create", "delete", "addChunk", "removeChunk", "createSubdivision", "deleteSubdivision", "assignChunk", "unassign", "listSubdivisions", "setSetting", "showSettings", "createGroup", "deleteGroup", "listGroups", "listMembers", "getGroup", "setGroup", "removePlayer", "setPermission", "listPermissions", "setHome", "listPlots"));
+            if(adminMode)
+                completions.addAll(List.of("reloadData"));
+            return;
+        }
+        String firstArg = args[0].toLowerCase();
+        switch(firstArg){
+            case "create", "createsubdivision", "creategroup" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[name]");
+                }
+            }
+
+            case "delete" -> {
+                if(args.length == 2){
+                    completions.addAll(getPlotNameCompletions(player, args[1], pm, adminMode));
+                }else if(args.length == 3 && args[2].length() == 0){
+                    completions.add("[confirmationToken]");
+                }
+            }
+
+            case "addchunk" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("([plot])");
+                }
+            }
+
+            case "assignchunk", "deletesubdivision" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[subdivision]");
+                }else if(args.length == 2){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
+                    if(plot == null) return;
+                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).toList());
+                }
+            }
+
+            case "setsetting", "showSettings" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[subdivision]");
+                }else if(args.length == 2){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
+                    if(plot == null) return;
+                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).toList());
+                }else if(args.length == 3 && args[2].length() == 0){
+                    completions.add("[setting]");
+                }else if(args.length == 3){
+                    completions.addAll(Arrays.stream(PlotSetting.values()).map(ps -> ps.name().toLowerCase()).toList());
+                }else if(args.length == 4 && firstArg.equals("setsetting")){
+                    completions.addAll(List.of("true", "false", "delete"));
+                }
+            }
+
+            case "deletegroup", "listmembers", "listpermissions" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[group]");
+                } else if(args.length == 2){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
+                    if(plot == null) return;
+                    completions.addAll(plot.getPlotData().getGroups().stream().map(g -> g.getGroupId().getGroupName()).toList());
+                }
+            }
+
+            case "getgroup" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[player]");
+                }else if(args.length == 2){
+                    completions.addAll(Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName).toList());
+                }
+            }
+
+            case "setgroup" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[player]");
+                }else if(args.length == 2){
+                    completions.addAll(Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName).toList());
+                }else if(args.length == 3 && args[2].length() == 0){
+                    completions.add("[group]");
+                }else  if(args.length == 3){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
+                    if(plot == null) break;
+                    completions.addAll(plot.getPlotData().getGroups().stream().map(g -> g.getGroupId().getGroupName()).toList());
+                }
+            }
+
+            case "removeplayer" ->{
+                if(args.length == 2){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
+                    if(plot == null) break;
+                    completions.addAll(plot.getPlotData().getGroups().stream().flatMap(g -> g.getMembers().stream().map(member -> member.getPlotMemberId().getUuid())).map(NeincraftUtils::uuidToName).toList());
+                }
+            }
+
+            case "setpermission" -> {
+                if(args.length == 2 && args[1].length() == 0){
+                    completions.add("[group]");
+                }else if (args.length == 2){
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode,true);
+                    if(plot == null) break;
+                    completions.addAll(plot.getPlotData().getGroups().stream().map(g -> g.getGroupId().getGroupName()).toList());
+                }else if(args.length == 3){
+                    completions.addAll(Arrays.stream(PlotPermission.values()).map(pp -> pp.name().toLowerCase()).toList());
+                }else if(args.length == 4){
+                    completions.addAll(List.of("true", "false", "delete"));
+                }
+            }
+
+            case "listplots" -> {
+                if(args.length == 2 && adminMode && args[1].length() == 0){
+                    completions.add("[player]");
+                }else if (args.length == 2 && adminMode){
+                    completions.addAll(Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName).toList());
+                }
+            }
+
+            case "reloaddata" -> {
+                if(args.length == 2 && adminMode){
+                    completions.addAll(getPlotNameCompletions(player, args[1], pm, true));
+                }
+            }
+        }
+    }
+    
+    private List<String> getPlotNameCompletions(Player player, String arg, PlotModule pm, boolean qualified){
+        if(!qualified){
+            return pm.getPlotsOfOwner(player.getUniqueId()).stream().map(plot -> plot.getPlotData().getName()).toList();
+        }else if(arg.length() == 0){
+            return List.of("[player]:");
+        }else if(!arg.contains(":")){
+            return Arrays.stream(Bukkit.getOfflinePlayers()).map(op -> op.getName() +":").toList();
+        }
+        String targetName = arg.substring(0, arg.indexOf(":"));
+        List<Plot> plots = null;
+        if(targetName.equals("")){
+            plots = pm.getPlotsOfOwner(null);
+        }else {
+            Optional<UUID> target = NeincraftUtils.nameToUuid(targetName);
+            if(target.isPresent()){
+                plots = pm.getPlotsOfOwner(target.get());
+            }else{
+                return Collections.emptyList();
+            }
+        }
+        return plots.stream().map(plot -> targetName + ":" + plot.getPlotData().getName()).toList();
+        
     }
 
     @Override
@@ -169,6 +324,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 plot.addChunk(chunkKey);
                 plot.persist();
                 player.sendMessage(Lang.CHUNK_ASSIGNED.getComponent(pd.getLanguage(), player));
+                PlotUtils.visualize(plot, player);
             }
 
             case "removechunk" ->{
@@ -180,7 +336,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     break;
                 }
                 ChunkKey chunkKey = ChunkKey.fromChunk(player.getChunk());
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
 
                 if(plot.getPlotData().getChunks().size() <= 1){
@@ -206,9 +362,10 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 plot.removeChunk(chunkKey);
                 plot.persist();
                 player.sendMessage(Lang.CHUNK_DELETED.getComponent(pd.getLanguage(), player));
+                PlotUtils.visualize(plot, player);
             }
 
-            case "subdivide" ->{
+            case "createsubdivision" ->{
                 if(args.length != 2) {
                     player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
                             "label", label,
@@ -216,7 +373,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 if(!PlotModule.PLOT_NAME_PATTERN.matcher(args[1]).matches()){
                     player.sendMessage(Lang.PLOT_NAME_INVALID.getComponent(pd.getLanguage(), player));
@@ -240,7 +397,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     break;
                 }
                 ChunkKey chunkKey = ChunkKey.fromChunk(player.getChunk());
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 SubdivisionData subdivisionData = plot.getSubdivision(args[1]);
                 if(subdivisionData == null){
@@ -267,7 +424,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Bukkit.dispatchCommand(player, "plot assignchunk main");
+                Bukkit.dispatchCommand(player, label + " assignchunk main");
             }
 
             case "deletesubdivision" ->{
@@ -278,7 +435,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 SubdivisionData subdivisionData = plot.getSubdivision(args[1]);
                 if(subdivisionData == null){
@@ -300,19 +457,21 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 player.sendMessage(Lang.PLOT_SUBDIVISION_LIST.getComponent(pd.getLanguage(), player));
                 player.sendMessage(new MineDown("&gold&" + plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).collect(Collectors.joining(", "))).toComponent());
             }
 
-            case "settings" ->{
-                if(args.length != 4){
+            case "setsetting" ->{
+                if(args.length != 4) {
                     player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
                             "label", label,
-                            "args", args[0] + "[subdivision] [setting] [value (true|false|delete)]"
+                            "args", args[0] + " [subdivision] [setting] [value (true|false|delete)]"
                     ).toComponent());
-                    Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                    break;
+                }
+                    Plot plot = assertOnOwnPlot(player, pm, adminMode);
                     if(plot == null) break;
                     SubdivisionData subdivisionData = plot.getSubdivision(args[1]);
                     if(subdivisionData == null){
@@ -345,7 +504,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     }
                     plot.persist();
                     player.sendMessage(Lang.PLOT_SETTING_UPDATED.getComponent(pd.getLanguage(), player));
-                }
+
             }
 
             case "showsettings" ->{
@@ -356,7 +515,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 SubdivisionData subdivisionData = null;
                 if(args.length == 1){
@@ -383,7 +542,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 }
             }
 
-            case "addgroup" ->{
+            case "creategroup" ->{
                 if(args.length != 2){
                     player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
                             "label", label,
@@ -391,7 +550,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 if(plot.getGroup(args[1]) != null){
                     player.sendMessage(Lang.PLOT_GROUP_EXISTS.getComponent(pd.getLanguage(), player));
@@ -414,7 +573,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 PlotMemberGroup group = plot.getGroup(args[1]);
                 if(group == null){
@@ -437,7 +596,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 player.sendMessage(Lang.PLOT_GROUP_LIST.getComponent(pd.getLanguage(), player));
                 player.sendMessage(
@@ -453,7 +612,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 PlotMemberGroup group = plot.getGroup(args[1]);
                 if(group == null){
@@ -462,7 +621,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 }
                 boolean everyone = group.getGroupId().getGroupName().equalsIgnoreCase("everyone");
                 Component listHeader = everyone ? Lang.PLOT_GROUP_EVERYONE_LIST.getComponent(pd.getLanguage(), player) : Lang.PLOT_GROUP_MEMBERS_LIST.getMinedown(pd.getLanguage(), player).replace("group", group.getGroupId().getGroupName()).toComponent();
-                String members = everyone ? plot.getPlotData().getGroups().stream().flatMap(g -> g.getMembers().stream()).distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", ")) : group.getMembers().stream().distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", "));
+                String members = everyone ? plot.getPlotData().getGroups().stream().flatMap(g -> g.getMembers().stream().map(member -> member.getPlotMemberId().getUuid())).distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", ")) : group.getMembers().stream().map(member -> member.getPlotMemberId().getUuid()).distinct().map(NeincraftUtils::uuidToName).collect(Collectors.joining(", "));
                 player.sendMessage(listHeader);
                 player.sendMessage(new MineDown("&gold&" + members).toComponent());
             }
@@ -475,7 +634,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 Optional<UUID> playerUUID = NeincraftUtils.nameToUuid(args[1]);
                 if(playerUUID.isEmpty()){
@@ -491,6 +650,45 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 ).toComponent());
             }
 
+            case "setgroup" ->{
+                if(args.length != 3){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + " [player] [group]"
+                    ).toComponent());
+                    break;
+                }
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
+                if(plot == null) break;
+                Optional<UUID> target = NeincraftUtils.nameToUuid(args[1]);
+                if(target.isEmpty()){
+                    player.sendMessage(Lang.PLAYER_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                PlotMemberGroup group = plot.getGroup(args[2]);
+                if(group == null){
+                    player.sendMessage(Lang.PLOT_GROUP_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+                plot.setPlayerGroup(target.get(), group);
+                plot.persist();
+                player.sendMessage(Lang.PLOT_GROUP_MEMBER_ADDED.getMinedown(pd.getLanguage(), player).replace(
+                        "player", NeincraftUtils.uuidToName(target.get()),
+                        "group", group.getGroupId().getGroupName()
+                ).toComponent());
+            }
+
+            case "removePlayer" ->{
+                if(args.length != 2){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + " [player]"
+                    ).toComponent());
+                    break;
+                }
+                Bukkit.dispatchCommand(player, label + " setgroup " + args[1] + " everyone");
+            }
+
             case "setpermission" ->{
                 if(args.length != 4){
                     player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
@@ -499,7 +697,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 SubdivisionData subdivisionData = plot.getChunkData(ChunkKey.fromChunk(player.getChunk())).getSubdivision();
                 PlotMemberGroup group = plot.getGroup(args[1]);
@@ -539,7 +737,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 SubdivisionData subdivisionData = plot.getChunkData(ChunkKey.fromChunk(player.getChunk())).getSubdivision();
                 PlotMemberGroup group = plot.getGroup(args[1]);
@@ -576,11 +774,63 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     ).toComponent());
                     break;
                 }
-                Plot plot = assertOnOwnPlot(player, pd, pm, adminMode);
+                Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 plot.setHome(player.getLocation());
                 plot.persist();
                 player.sendMessage(Lang.HOME_SET.getComponent(pd.getLanguage(), player));
+            }
+
+            case "listplots" ->{
+                if((!adminMode && args.length != 1) || (adminMode && args.length != 2)){
+                    player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
+                            "label", label,
+                            "args", args[0] + (adminMode ? " [player]" : "")
+                    ).toComponent());
+                    break;
+                }
+                UUID targetPlayer = adminMode ? NeincraftUtils.nameToUuid(args[1]).orElse(null) : player.getUniqueId();
+                if(targetPlayer == null){
+                    player.sendMessage(Lang.PLAYER_NOT_FOUND.getComponent(pd.getLanguage(), player));
+                    break;
+                }
+
+                List<Plot> ownPlots = pm.getPlotsOfOwner(targetPlayer);
+                List<Plot> memberPlots = pm.getPlotsWithGroupMember(targetPlayer);
+                List<Plot> homePlots = pm.getPlotsWithPermissionOnMain(targetPlayer, PlotPermission.TELEPORT_HOME);
+
+                player.sendMessage(Lang.PLOT_LIST.getMinedown(pd.getLanguage(), player).replace(
+                        "player", NeincraftUtils.uuidToName(targetPlayer)
+                ).toComponent());
+
+                player.sendMessage(Lang.PLOT_LIST_OWNER.getComponent(pd.getLanguage(), player));
+                if(ownPlots.isEmpty()){
+                    player.sendMessage(Lang.LIST_EMPTY.getComponent(pd.getLanguage(), player));
+                }else{
+                    player.sendMessage(new MineDown("&gray&" + ownPlots.stream().map(plot -> plot.getPlotData().getName()).sorted().collect(Collectors.joining(", "))).toComponent());
+                }
+
+                player.sendMessage(Lang.PLOT_LIST_MEMBER.getComponent(pd.getLanguage(), player));
+                if(memberPlots.isEmpty()){
+                    player.sendMessage(Lang.LIST_EMPTY.getComponent(pd.getLanguage(), player));
+                }else{
+                    player.sendMessage(new MineDown("&gray&" + memberPlots.stream().map(plot -> NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) + ":" + plot.getPlotData().getName()).sorted().collect(Collectors.joining(", "))).toComponent());
+                }
+
+                player.sendMessage(Lang.PLOT_LIST_HOME.getComponent(pd.getLanguage(), player));
+                if(ownPlots.isEmpty() && homePlots.isEmpty()){
+                    player.sendMessage(Lang.LIST_EMPTY.getComponent(pd.getLanguage(), player));
+                }else{
+                    player.sendMessage(new MineDown("&gray&" +
+                            /*
+                            Convert own Plots to plot names as sorted stream ->
+                            filter plots the target does not own from plots with home permission, convert to sorted stream of "[owner]:[plotName]" ->
+                            concat the two streams and join with ", " as delimiter.
+                             */
+                            Stream.concat(ownPlots.stream().map(plot -> plot.getPlotData().getName()).sorted(),
+                                    homePlots.stream().filter(plot -> !targetPlayer.equals(plot.getPlotData().getOwner())).map(plot -> NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) + ":" + plot.getPlotData().getName()).sorted())
+                                    .collect(Collectors.joining(", "))).toComponent());
+                }
             }
 
             case "reloaddata" ->{
@@ -604,7 +854,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
             default -> {
                 player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(pd.getLanguage(), player).replace(
                         "label", label,
-                        "args", "(info|create)"
+                        "args", "[action] [...]"
                 ).toComponent());
             }
         }
@@ -616,18 +866,22 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
         return token;
     }
 
-    private Plot assertOnOwnPlot(Player player, PlayerData pd, PlotModule pm, boolean adminMode){
+    private Plot assertOnOwnPlot(Player player, PlotModule pm, boolean adminMode, boolean silent){
         Optional<Plot> oPlot = pm.getPlotAtChunk(ChunkKey.fromChunk(player.getChunk()));
         if(oPlot.isEmpty()){
-            player.sendMessage(Lang.PLOT_NOT_AT_LOCATION.getComponent(pd.getLanguage(), player));
+            if(!silent) player.sendMessage(Lang.PLOT_NOT_AT_LOCATION.getComponent(player));
             return null;
         }
         Plot plot = oPlot.get();
         if(!adminMode && !player.getUniqueId().equals(plot.getPlotData().getOwner())){
-            player.sendMessage(Lang.NO_MANAGEMENT_PERMISSION.getComponent(pd.getLanguage(), player));
+            if(!silent) player.sendMessage(Lang.NO_MANAGEMENT_PERMISSION.getComponent(player));
             return null;
         }
         return plot;
+    }
+
+    private Plot assertOnOwnPlot(Player player, PlotModule pm, boolean adminMode){
+        return assertOnOwnPlot(player, pm, adminMode, false);
     }
 
     private void showInfo(Player p, PlayerLanguage lang, PlotModule pm){
@@ -638,8 +892,10 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     "name", plot.getPlotData().getName(),
                     "chunks", "" + plot.getPlotData().getChunks().size(),
                     "owner", plot.getPlotData().getOwner() != null ? NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) :  "Server",
-                    "group", plot.getPlayerGroup(p.getUniqueId()).getGroupId().getGroupName())
+                    "group", plot.getPlayerGroup(p.getUniqueId()).getGroupId().getGroupName(),
+                    "subdivision", plot.getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision().getName())
                     .toComponent());
+            PlotUtils.visualize(plot, p);
         }else{
             p.sendMessage(Lang.PLOT_NOT_AT_LOCATION.getComponent(lang, p));
         }
@@ -683,8 +939,10 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
             getLogger().log(Level.FINE, String.format("Player's (%s) plot creation attempt failed because their chosen name was occupied", p.getName()));
             return;
         }
-        pm.addPlot(Plot.createNewPlot(name, ChunkKey.fromChunk(c), adminMode ? null : p.getUniqueId(), LocationData.fromBukkitlocation(p.getLocation())));
+        Plot plot = Plot.createNewPlot(name, ChunkKey.fromChunk(c), adminMode ? null : p.getUniqueId(), LocationData.fromBukkitlocation(p.getLocation()));
+        pm.addPlot(plot);
         p.sendMessage(Lang.PLOT_CREATED.getComponent(lang, p));
+        PlotUtils.visualize(plot, p);
     }
 
     private boolean isConnectingChunk(Plot p, ChunkKey newChunk){

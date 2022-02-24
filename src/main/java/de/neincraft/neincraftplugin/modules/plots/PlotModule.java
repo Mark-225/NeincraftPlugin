@@ -2,6 +2,7 @@ package de.neincraft.neincraftplugin.modules.plots;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.plots.protection.PlotProtection;
+import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
@@ -13,7 +14,12 @@ import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.repository.PlotRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -27,6 +33,7 @@ public class PlotModule extends Module {
     private List<Plot> loadedPlots = new ArrayList<>();
     private BluemapIntegration bluemapIntegration;
     private PlotProtection plotProtection;
+    private HashSet<String> publicWorlds = new HashSet<>();
 
     @InjectCommand("plot")
     private PlotCommand plotCommand;
@@ -49,6 +56,18 @@ public class PlotModule extends Module {
                 }
             }, 200, 200);
         }
+
+        NeincraftPlugin.getInstance().saveResource("worlds.yml", false);
+        File configFile = new File(NeincraftPlugin.getInstance().getDataFolder(), "worlds.yml");
+        FileConfiguration worldsConfig = new YamlConfiguration();
+        try {
+            worldsConfig.load(configFile);
+            if(worldsConfig.contains("publicWorlds") && worldsConfig.isList("publicWorlds"))
+                publicWorlds.addAll(worldsConfig.getStringList("publicWorlds"));
+        } catch (IOException | InvalidConfigurationException e) {
+            getLogger().log(Level.WARNING, "Could not load worlds config file.", e);
+        }
+
         plotProtection = new PlotProtection();
         return true;
     }
@@ -85,9 +104,9 @@ public class PlotModule extends Module {
         return loadedPlots.stream().filter(plot -> plot.getPlotData().getId() == plotId).findAny();
     }
 
-    @SuppressWarnings("deprecated")
+
     public boolean isPublicWorld(World w){
-        return w.getGameRuleValue("isPlotWorld").equalsIgnoreCase("true");
+        return publicWorlds.contains(w.getName());
     }
 
     public int getAvailablePlots(PlayerData pd, boolean includeBonus){
@@ -134,13 +153,21 @@ public class PlotModule extends Module {
         String player = name.substring(0, name.indexOf(":"));
         String plot = name.substring(name.indexOf(":")+1);
         if(player.equalsIgnoreCase("")) return findByName(plot, null);
-        Optional<UUID> playerUuid = NeincraftUtils.nameToUuid(name);
+        Optional<UUID> playerUuid = NeincraftUtils.nameToUuid(player);
         if(playerUuid.isEmpty()) return Optional.empty();
         return findByName(plot, playerUuid.get());
     }
 
     public Map<Optional<UUID>, Plot> findAllByName(String name){
         return loadedPlots.stream().filter(plot -> plot.getPlotData().getName().equalsIgnoreCase(name)).collect(Collectors.toMap(plot -> Optional.of(plot.getPlotData().getOwner()), plot -> plot));
+    }
+
+    public List<Plot> getPlotsWithGroupMember(UUID player){
+        return loadedPlots.stream().filter(plot -> !player.equals(plot.getPlotData().getOwner()) && !plot.getPlayerGroup(player).getGroupId().getGroupName().equalsIgnoreCase("everyone")).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public List<Plot> getPlotsWithPermissionOnMain(UUID player, PlotPermission permission){
+        return loadedPlots.stream().filter(plot -> plot.resolvePermission(plot.getSubdivision("main"), plot.getPlayerGroup(player), permission)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override

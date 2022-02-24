@@ -8,8 +8,8 @@ commands:
   plot:
     aliases:
       - gs
-    permission: neincraft.commands.plot
+    permission: neincraft.commands.user.plot
   plotadmin:
     aliases:
       - gsadmin
-    permission: neincraft.commands.plotadmin
+    permission: neincraft.commands.admin.plotadmin

@@ -1,11 +1,14 @@
 package de.neincraft.neincraftplugin.modules.plots.protection;
 
+import com.destroystokyo.paper.MaterialSetTag;
+import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.PlotModule;
+import de.neincraft.neincraftplugin.modules.plots.dto.SubdivisionData;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
@@ -56,11 +59,14 @@ public class PlotProtection implements Listener {
                 playersAtIllegalLocation.removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
                 for(Player p : Bukkit.getOnlinePlayers()){
                     Optional<Plot> plot = getFromCache(p.getChunk());
-                    if(plot.isPresent() && !p.hasPermission("neincraft.plots.bypass.enter") && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER)){
-                        if(playersAtIllegalLocation.contains(p.getUniqueId()))
+                    if(plot.isPresent() && !p.hasPermission("neincraft.plots.bypass.enter") && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER) && !p.getUniqueId().equals(plot.get().getPlotData().getOwner())){
+                        if(playersAtIllegalLocation.contains(p.getUniqueId())) {
                             p.teleport(p.getWorld().getSpawnLocation().add(0.5, 0, 0.5));
-                        else
+                        }
+                        else {
                             playersAtIllegalLocation.add(p.getUniqueId());
+                            continue;
+                        }
                     }
                     playersAtIllegalLocation.remove(p.getUniqueId());
                 }
@@ -92,17 +98,23 @@ public class PlotProtection implements Listener {
         if(event.getFrom().getChunk() == event.getTo().getChunk()) return;
         Optional<Plot> newPlot = getFromCache(event.getTo().getChunk());
         Optional<Plot> oldPlot = getFromCache(event.getFrom().getChunk());
-        if(newPlot.equals(oldPlot)) return;
+        if(newPlot.isEmpty() && oldPlot.isEmpty()) return;
+        if(newPlot.isPresent() && newPlot.equals(oldPlot)){
+            SubdivisionData oldSubdivision = newPlot.get().getChunkData(ChunkKey.fromChunk(event.getFrom().getChunk())).getSubdivision();
+            SubdivisionData newSubdivision = newPlot.get().getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision();
+            if(oldSubdivision == newSubdivision) return;
+        }
         newPlot.ifPresentOrElse(
                 plot -> {
-                    if(!event.getPlayer().hasPermission("neincraft.plots.bypass.enter") && !plot.resolveSettingsValue(plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER)){
+                    if(!event.getPlayer().hasPermission("neincraft.plots.bypass.enter") && !plot.resolveSettingsValue(plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER) && !event.getPlayer().getUniqueId().equals(plot.getPlotData().getOwner())){
                         event.setCancelled(true);
                         event.getPlayer().sendActionBar(Lang.PLOT_CANT_ENTER.getComponent(event.getPlayer()));
                         return;
                     }
                     event.getPlayer().sendActionBar(Lang.PLOT_ENTER.getMinedown(event.getPlayer()).replace(
                             "plot", plot.getPlotData().getName(),
-                            "owner", plot.isServerPlot() ? "Server" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner())
+                            "owner", plot.isServerPlot() ? "Server" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner()),
+                            "subdivision", plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision().getName()
                     ).toComponent());
                 },
                 () -> event.getPlayer().sendActionBar(Lang.PLOT_LEAVE.getComponent(event.getPlayer()))
@@ -116,7 +128,7 @@ public class PlotProtection implements Listener {
         Plot plot = oPlot.get();
         if(!plot.resolvePermission(plot.getChunkData(ChunkKey.fromChunk(changedChunk)).getSubdivision(), plot.getPlayerGroup(player.getUniqueId()), requiredPermission)){
             cancel.accept(true);
-            player.sendMessage(Lang.PLOT_CANT_MODIFY.getComponent(player));
+            player.sendActionBar(Lang.PLOT_CANT_MODIFY.getComponent(player));
         }
     }
 
@@ -234,6 +246,8 @@ public class PlotProtection implements Listener {
             permission = ((Lectern) event.getClickedBlock().getBlockData()).hasBook() ? PlotPermission.READ_LECTERN :PlotPermission.EDIT_LECTERN;
         }else if(material == Material.BEEHIVE){
             permission = PlotPermission.HARVEST_HIVES;
+        }else if(Tag.SIGNS.isTagged(material) && event.getItem() != null && MaterialTags.DYES.isTagged(event.getItem().getType())){
+            permission = PlotPermission.BUILD;
         }
 
         if(permission != null)
@@ -341,6 +355,11 @@ public class PlotProtection implements Listener {
     public void onHitDragonEgg(PlayerInteractEvent event){
         if((event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock() != null && event.getClickedBlock().getType() == Material.DRAGON_EGG)
             handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getClickedBlock().getChunk(), event::setCancelled);
+    }
+
+    @EventHandler
+    public void onSignDye(SignChangeEvent event){
+        handleBasicPlayerEvent(event.getPlayer(), PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
     }
 
 
@@ -487,6 +506,14 @@ public class PlotProtection implements Listener {
                 targetPlot.get().resolveSettingsValue(targetPlot.get().getChunkData(ChunkKey.fromChunk(event.getBlock().getChunk())).getSubdivision(), PlotSetting.FIRE_SPREAD))
             event.setCancelled(true);
     }
+
+    @EventHandler
+    public void onEntityUsePortal(EntityPortalEvent event){
+        if(event.getEntity().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) return;
+        event.setCancelled(true);
+    }
+
+
 
 
 

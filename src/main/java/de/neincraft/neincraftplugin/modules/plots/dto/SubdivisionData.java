@@ -19,7 +19,7 @@ public class SubdivisionData implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private PlotData plot;
 
-    @OneToMany(mappedBy = "settingId.subdivision", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "settingId.subdivision", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<PlotSettingsEntry> settings;
 

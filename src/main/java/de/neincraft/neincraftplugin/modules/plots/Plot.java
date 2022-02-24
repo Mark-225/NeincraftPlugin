@@ -38,7 +38,9 @@ public class Plot {
         ChunkData chunkData = new ChunkData(startChunk, data, subdivision);
         PlotMemberGroup members = new PlotMemberGroup(new GroupId(data, "members"), new ArrayList<>(), null);
         members.setGroupPermissions(PermissionFlag.getMemberDefaults(members, subdivision));
-        PlotMemberGroup owners = new PlotMemberGroup(new GroupId(data, "owners"), owner != null ? new ArrayList<>(List.of(owner)) : new ArrayList<>(), null);
+        PlotMemberGroup owners = new PlotMemberGroup(new GroupId(data, "owners"), new ArrayList<>(), null);
+        if(owner != null)
+            owners.getMembers().add(new PlotMember(new PlotMemberId(owners, owner)));
         owners.setGroupPermissions(PermissionFlag.getOwnerDefaults(owners, subdivision));
         PlotMemberGroup everyone = new PlotMemberGroup(new GroupId(data, "everyone"), new ArrayList<>(), null);
         everyone.setGroupPermissions(PermissionFlag.getEveryoneDefault(everyone, subdivision));
@@ -160,7 +162,7 @@ public class Plot {
 
     public PlotMemberGroup getPlayerGroup(UUID player){
         for(PlotMemberGroup group : plotData.getGroups()){
-            for(UUID member : group.getMembers()){
+            for(UUID member : group.getMembers().stream().map(pm -> pm.getPlotMemberId().getUuid()).toList()){
                 if(member.equals(player))
                     return group;
             }
@@ -169,9 +171,9 @@ public class Plot {
     }
 
     public void setPlayerGroup(UUID player, PlotMemberGroup group){
-        getPlayerGroup(player).getMembers().remove(player);
+        getPlayerGroup(player).getMembers().removeIf(pm -> pm.getPlotMemberId().getUuid().equals(player));
         if(group == null || group.getGroupId().getGroupName().equals("everyone")) return;
-        group.getMembers().add(player);
+        group.getMembers().add(new PlotMember(new PlotMemberId(group, player)));
     }
 
     public PlotSettingsEntry getSettingsEntry(SubdivisionData subdivisionData, PlotSetting setting){
@@ -291,19 +293,19 @@ public class Plot {
     }
 
     public void refreshData(){
-        PlotRepository repository = PlotRepository.getRepository();
-        if(repository != null) {
-            plotData = repository.findById(this.id);
-            repository.close();
+        try(PlotRepository plotRepository = PlotRepository.getRepository()) {
+            this.plotData = plotRepository.findById(id);
+        }catch(Exception e){
+            e.printStackTrace();
         }
     }
 
     public void persist(){
-        PlotRepository repository = PlotRepository.getRepository();
-        if(repository != null) {
+        try(PlotRepository repository = PlotRepository.getRepository()){
             repository.persist(plotData);
             id = plotData.getId();
-            repository.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
     }
 

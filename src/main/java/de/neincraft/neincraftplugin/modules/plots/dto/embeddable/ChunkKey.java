@@ -50,6 +50,10 @@ public class ChunkKey implements Serializable{
         this.world = world;
     }
 
+    public int simpleDistance(ChunkKey other){
+        return Math.max(Math.abs(this.getX() - other.getX()), Math.abs(this.getZ() - other.getZ()));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

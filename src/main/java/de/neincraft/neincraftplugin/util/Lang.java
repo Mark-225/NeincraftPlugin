@@ -22,9 +22,17 @@ public enum Lang {
     YES("Ja", "Yes"),
     NO("Nein", "No"),
     DEFAULT("Standard", "Default"),
+    LIST_EMPTY("&red&Keine Einträge gefunden", "&red&No entries found"),
 
+    //stats
+    FIRST_JOIN("&green&Willkommen zu deinem ersten Besuch auf Neincraft, [%player%](color=yellow)!", "&green&Welcome to your first visit on Neincraft, [%player%](color=yellow)!"),
+    CHAT_TEMPLATE("%label% [%name%](color=white) [>>](color=gray)", "%label% [%name%](color=white) [>>](color=gray) "),
     //Plots
     INVALID_WORLD("&red&In dieser Welt können keine Grundstücke erstellt werden!", "&red&Can't create plots in this world!"),
+    PLOT_LIST("&yellow&Grundstücksliste [%player%](white):\n", "&yellow&Plot list [%player%](white):\n"),
+    PLOT_LIST_OWNER("&gray&Besitzt:", "&gray&Owns:"),
+    PLOT_LIST_MEMBER("&gray&Ist einer Gruppe zugewiesen:", "&gray&Is member of a group:"),
+    PLOT_LIST_HOME("&gary&Hat Teleportrechte:", "&gray&Has teleportation permissions:"),
     PLOT_NOT_FOUND("&red&Grundstück nicht gefunden. Bitte überprüfe den eingegebenen Namen!", "&red&Plot not found. Please verify your provided name!"),
     ALREADY_OCCUPIED("&red&An dieser Position befindet sich bereits ein Grundstück!", "&red&There is already a plot at this location!"),
     INSUFFICIENT_PLOTS("&red&Du kannst keine weiteren Grundstücke erstellen!", "&red&You can't create any further plots!"),
@@ -46,13 +54,13 @@ public enum Lang {
     PLOT_NAME_OCCUPIED("&red&Du besitzt bereits ein Grundstück mit diesem Namen! (Die Überprüfung achtet nicht auf Groß-/Kleinschreibung)", "&red&You already own a plot with this name! (Validation is not case-sensitive)"),
     PLOT_NOT_AT_LOCATION("&red&An dieser Position befindet sich kein Grundstück!", "&red&There is no plot at this location!"),
     PLOT_INFO("""
-            [  =====](color=blue)[\\[](color=aqua)[%name%](color=white)[\\]](color=aqua)[=====  ](color=blue)
+            [  =====](color=blue)[\\[](color=aqua)[%name% \\[%subdivision%\\]](color=white)[\\]](color=aqua)[=====  ](color=blue)
             [Besitzer: ](color=yellow)[%owner%](color=white)
             [Chunks: ](color=yellow)[%chunks%](color=white)
             [Deine Gruppe: ](color=yellow)[%group%](color=white)\040
             """,
     """
-            [  =====](color=blue)[\\[](color=aqua)[%name%](color=white)[\\]](color=aqua)[=====  ](color=blue)
+            [  =====](color=blue)[\\[](color=aqua)[%name% \\[%subdivision%\\]](color=white)[\\]](color=aqua)[=====  ](color=blue)
             [Owner: ](color=yellow)[%owner%](color=white)
             [Chunks: ](color=yellow)[%chunks%](color=white)
             [Your Group: ](color=yellow)[%group%](color=white)\040
@@ -82,7 +90,7 @@ public enum Lang {
             [The following settings are configured for this subdivision:](color=yellow)
             [(Hover over the names for detailed descriptions)](color=gray)\040
             """),
-    PLOT_SETTINGS_ENTRY("[%setting%](color=white hover=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%defined%](color=yellow)",
+    PLOT_SETTINGS_ENTRY("[%setting%](color=white show_text=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%defined%](color=yellow)",
             "[%setting%](color=white hover=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%defined%](color=yellow)"),
     PLOT_SETTING_PROTECTED("&red&Nur Admins können diese Einstellung konfigurieren!", "&red&Only administrators can configure this setting!"),
     //groups
@@ -92,17 +100,18 @@ public enum Lang {
     PLOT_GROUP_DELETED("&green&Gruppe gelöscht. Alle Mitglieder gehören jetzt wieder \"everyone\" an!", "&green&Group deleted. All members are now part of \"everyone\""),
     PLOT_GROUP_PROTECTED("&red&Die Gruppe ist geschützt und kann nicht gelöscht werden!", "&red&The subdivision ist protected and can't be deleted!"),
     PLOT_GROUP_LIST("&yellow&Die folgenden Gruppen sind auf diesem Grundstück registriert:", "&yellow&The following groups are registered on this plot"),
-    PLOT_GROUP_MEMBERS_LIST("&yellow&Folgende Spieler gehören der Gruppe %group% an:", "&yellow&The following players are part of the group %group%"),
-    PLOT_GROUP_MEMBER_QUERY("&yellow&Der Spieler %player% gehört der Gruppe %group% an.", "&yellow&The player %player% is member of the group %group%."),
+    PLOT_GROUP_MEMBERS_LIST("&yellow&Folgende Spieler gehören der Gruppe [%group%](white) an:", "&yellow&The following players are part of the group [%group%](white):"),
+    PLOT_GROUP_MEMBER_QUERY("&yellow&Der Spieler [%player%](white) gehört der Gruppe [%group%](white) an.", "&yellow&The player [%player%](white) is member of the group [%group%](white)."),
+    PLOT_GROUP_MEMBER_ADDED("&yellow&Der Spieler [%player%](white) ist jetzt Mitglied der Gruppe [%group%](white)!", "&yellow&Player [%player%](white) is now member of [%group%](white)!" ),
     PLOT_GROUP_EVERYONE_LIST("&yellow&Alle Spieler außer folgende gehören der Standardgruppe \"everyone\" an:", "&yellow&All players except the following are part of the default group \"everyone\":"),
-    PLOT_PERMISSION_UPDATED("&green&Berechtigung gespeichert!", "&green&Permission saved!"),
+    PLOT_PERMISSION_UPDATED("&green&Berechtigung für den Bereich an deiner Position gespeichert!", "&green&Permission saved for the subdivision at your location!"),
     PLOT_PERMISSION_VALUE_INCORRECT("&red&Ungültiger Wert für Berechtigung. Nutze \"true\", \"false\" oder \"delete\"", "&red&Invalid value for plot permission. Use \"true\", \"false\" or \"delete\""),
     PLOT_PERMISSION_NOT_FOUND("&red&Es existiert keine Berechtigung mit diesem Namen!", "&red&A permission with this name does not exist!"),
     PLOT_PERMISSION_LIST("&yellow&Die folgenden Berechtigungen sind für die Gruppe %group% im Bereich %subdivision% konfiguriert:", "&yellow&The following permissions are configured for group %group% in subdivision %subdivision%:"),
     PLOT_PERMISSION_ENTRY("[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%group% - %subdivision%](color=yellow)", "[%permission%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%group% - %subdivision%](color=yellow)"),
 
     //protection
-    PLOT_ENTER("&yellow&Du betrittst das Grundstück [%plot%](color=white) von [%owner%](color=white)", "&yellow&You are entering the plot [%plot%](color=white) by [%owner%](color=white)"),
+    PLOT_ENTER("&yellow&Du betrittst das Grundstück [%plot% \\[%subdivision%\\]](color=white) von [%owner%](color=white)", "&yellow&You are entering the plot [%plot% \\[%subdivision%\\]](color=white) by [%owner%](color=white)"),
     PLOT_LEAVE("&green&Du bist nun auf freiem Gebiet", "&green&You are now on unclaimed land"),
     PLOT_CANT_ENTER("&red&Du darfst diesen Bereich nicht betreten!", "&red&You are not allowed to enter this area!"),
     PLOT_CANT_MODIFY("&red&Das darfst du hier nicht tun!", "&red&You are not allowed to do that here!");
@@ -132,7 +141,7 @@ public enum Lang {
     }
 
     public MineDown getMinedown(@Nullable PlayerLanguage language, @Nullable Player player){
-        return new MineDown(getRawString(language, player));
+        return new MineDown(getRawString(language, player)).replaceFirst(true);
     }
 
     public Component getComponent(@Nullable PlayerLanguage language, @Nullable Player player){

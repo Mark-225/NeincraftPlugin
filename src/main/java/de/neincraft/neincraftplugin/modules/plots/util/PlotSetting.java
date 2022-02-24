@@ -9,7 +9,7 @@ public enum PlotSetting {
     SPAWN_ANIMALS(true),
     FIRE_SPREAD(false),
     ALLOW_EXPLOSIONS(false),
-    ALLOW_PVP(false, false),
+    ALLOW_PVP(false),
     FALL_DAMAGE(true, false),
     DROWNING_DAMAGE(true, false),
     KEEP_INVENTORY(false, false),

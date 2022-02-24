@@ -1,6 +1,7 @@
 package de.neincraft.neincraftplugin.modules.plots.dto;
 
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.GroupId;
+import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.PlotMemberId;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -15,15 +16,15 @@ public class PlotMemberGroup implements Serializable {
     @EmbeddedId
     private GroupId groupId;
 
-    @ElementCollection()
+    @OneToMany(mappedBy = "plotMemberId.group", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
-    private List<UUID> members;
+    private List<PlotMember> members;
 
-    @OneToMany(mappedBy = "permissionId.group", cascade = {CascadeType.ALL})
+    @OneToMany(mappedBy = "permissionId.group", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<PermissionFlag> groupPermissions;
 
-    public PlotMemberGroup(GroupId groupId, List<UUID> members, List<PermissionFlag> groupPermissions) {
+    public PlotMemberGroup(GroupId groupId, List<PlotMember> members, List<PermissionFlag> groupPermissions) {
         this.groupId = groupId;
         this.members = members;
         this.groupPermissions = groupPermissions;
@@ -40,11 +41,11 @@ public class PlotMemberGroup implements Serializable {
         this.groupId = groupId;
     }
 
-    public List<UUID> getMembers() {
+    public List<PlotMember> getMembers() {
         return members;
     }
 
-    public void setMembers(List<UUID> members) {
+    public void setMembers(List<PlotMember> members) {
         this.members = members;
     }
 

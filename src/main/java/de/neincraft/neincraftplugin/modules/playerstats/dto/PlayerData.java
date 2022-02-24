@@ -24,6 +24,15 @@ public class PlayerData {
     private int bonusChunks = 0;
 
     @Column
+    private long secondsPlayed = 0;
+
+    @Column
+    private String germanLabel = "[\\[](dark_aqua)[Spieler](aqua)[\\]](dark_aqua)";
+
+    @Column
+    private String englishLabel = "[\\[](dark_aqua)[Player](aqua)[\\]](dark_aqua)";
+
+    @Column
     @Enumerated(EnumType.STRING)
     private PlayerLanguage language = PlayerLanguage.AUTO;
 
@@ -84,5 +93,29 @@ public class PlayerData {
 
     public void setExpiryTimestamp(long expiryTimestamp) {
         this.expiryTimestamp = expiryTimestamp;
+    }
+
+    public long getSecondsPlayed() {
+        return secondsPlayed;
+    }
+
+    public void setSecondsPlayed(long secondsPlayed) {
+        this.secondsPlayed = secondsPlayed;
+    }
+
+    public String getGermanLabel() {
+        return germanLabel;
+    }
+
+    public void setGermanLabel(String germanLabel) {
+        this.germanLabel = germanLabel;
+    }
+
+    public String getEnglishLabel() {
+        return englishLabel;
+    }
+
+    public void setEnglishLabel(String englishLabel) {
+        this.englishLabel = englishLabel;
     }
 }
