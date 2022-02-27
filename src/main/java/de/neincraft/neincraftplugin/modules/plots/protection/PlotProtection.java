@@ -1,26 +1,30 @@
 package de.neincraft.neincraftplugin.modules.plots.protection;
 
-import com.destroystokyo.paper.MaterialSetTag;
 import com.destroystokyo.paper.MaterialTags;
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
+import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.PlotModule;
 import de.neincraft.neincraftplugin.modules.plots.dto.SubdivisionData;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
+import de.neincraft.neincraftplugin.util.BlockBatchChangedEvent;
 import de.neincraft.neincraftplugin.util.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
+import io.papermc.paper.event.block.BlockPreDispenseEvent;
 import io.papermc.paper.event.block.PlayerShearBlockEvent;
 import io.papermc.paper.event.player.PlayerFlowerPotManipulateEvent;
 import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
+import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Lectern;
 import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.HopperMinecart;
@@ -48,10 +52,11 @@ public class PlotProtection implements Listener {
     private Map<ChunkKey, Optional<Plot>> plotCache = new HashMap<>();
     private PlotModule plotModule;
     private List<UUID> playersAtIllegalLocation = new ArrayList<>();
-
+    private BossBar pvpBossbarEN = null;
+    private BossBar pvpBossbarDE = null;
 
     public PlotProtection(){
-        Module.getInstance(PlotModule.class).ifPresent(pm ->{
+        AbstractModule.getInstance(PlotModule.class).ifPresent(pm ->{
             plotModule = pm;
             Bukkit.getPluginManager().registerEvents(this, NeincraftPlugin.getInstance());
 
@@ -59,7 +64,8 @@ public class PlotProtection implements Listener {
                 playersAtIllegalLocation.removeIf(uuid -> Bukkit.getPlayer(uuid) == null);
                 for(Player p : Bukkit.getOnlinePlayers()){
                     Optional<Plot> plot = getFromCache(p.getChunk());
-                    if(plot.isPresent() && !p.hasPermission("neincraft.plots.bypass.enter") && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER) && !p.getUniqueId().equals(plot.get().getPlotData().getOwner())){
+                    ChunkKey playerChunk = ChunkKey.fromChunk(p.getChunk());
+                    if(plot.isPresent() && !p.hasPermission("neincraft.plots.bypass.enter") && !plot.get().resolveSettingsValue(plot.get().getChunkData(playerChunk).getSubdivision(), PlotSetting.ALLOW_ENTER) && !p.getUniqueId().equals(plot.get().getPlotData().getOwner())){
                         if(playersAtIllegalLocation.contains(p.getUniqueId())) {
                             p.teleport(p.getWorld().getSpawnLocation().add(0.5, 0, 0.5));
                         }
@@ -68,10 +74,33 @@ public class PlotProtection implements Listener {
                             continue;
                         }
                     }
+                    if(plot.isPresent() && plot.get().resolveSettingsValue(plot.get().getChunkData(playerChunk).getSubdivision(), PlotSetting.ALLOW_PVP)){
+                        showPvPWarning(p);
+                    }else{
+                        hidePvPWarning(p);
+                    }
                     playersAtIllegalLocation.remove(p.getUniqueId());
                 }
             }, 100, 100);
+            pvpBossbarEN = BossBar.bossBar(Lang.PLOT_PVP_ACTIVE.getComponent(PlayerLanguage.ENGLISH, null), BossBar.MAX_PROGRESS, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
+            pvpBossbarDE = BossBar.bossBar(Lang.PLOT_PVP_ACTIVE.getComponent(PlayerLanguage.GERMAN, null), BossBar.MAX_PROGRESS, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
         });
+    }
+
+    private void showPvPWarning(Player p){
+        PlayerLanguage language = NeincraftUtils.resolvePlayerLanguage(p);
+        if(language == PlayerLanguage.GERMAN){
+            p.hideBossBar(pvpBossbarEN);
+            p.showBossBar(pvpBossbarDE);
+        }else{
+            p.hideBossBar(pvpBossbarDE);
+            p.showBossBar(pvpBossbarEN);
+        }
+    }
+
+    private void hidePvPWarning(Player p){
+        p.hideBossBar(pvpBossbarDE);
+        p.hideBossBar(pvpBossbarEN);
     }
 
     private Optional<Plot> getFromCache(ChunkKey chunk){
@@ -85,7 +114,7 @@ public class PlotProtection implements Listener {
     private boolean canPropagate(Plot from, Plot to){
         if(from == to || to == null) return true;
         if(from == null) return false;
-        return from.getPlotData().getOwner().equals(to.getPlotData().getOwner());
+        return Objects.equals(from.getPlotData().getOwner(), to.getPlotData().getOwner());
     }
 
     @EventHandler
@@ -106,10 +135,17 @@ public class PlotProtection implements Listener {
         }
         newPlot.ifPresentOrElse(
                 plot -> {
-                    if(!event.getPlayer().hasPermission("neincraft.plots.bypass.enter") && !plot.resolveSettingsValue(plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision(), PlotSetting.ALLOW_ENTER) && !event.getPlayer().getUniqueId().equals(plot.getPlotData().getOwner())){
+                    ChunkKey targetChunk = ChunkKey.fromChunk(event.getTo().getChunk());
+                    SubdivisionData targetSubdivision = plot.getChunkData(targetChunk).getSubdivision();
+                    if(!event.getPlayer().hasPermission("neincraft.plots.bypass.enter") && !plot.resolveSettingsValue(targetSubdivision, PlotSetting.ALLOW_ENTER) && !event.getPlayer().getUniqueId().equals(plot.getPlotData().getOwner())){
                         event.setCancelled(true);
                         event.getPlayer().sendActionBar(Lang.PLOT_CANT_ENTER.getComponent(event.getPlayer()));
                         return;
+                    }
+                    if(plot.resolveSettingsValue(targetSubdivision, PlotSetting.ALLOW_PVP)){
+                        showPvPWarning(event.getPlayer());
+                    }else{
+                        hidePvPWarning(event.getPlayer());
                     }
                     event.getPlayer().sendActionBar(Lang.PLOT_ENTER.getMinedown(event.getPlayer()).replace(
                             "plot", plot.getPlotData().getName(),
@@ -117,7 +153,10 @@ public class PlotProtection implements Listener {
                             "subdivision", plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision().getName()
                     ).toComponent());
                 },
-                () -> event.getPlayer().sendActionBar(Lang.PLOT_LEAVE.getComponent(event.getPlayer()))
+                () ->{
+                    hidePvPWarning(event.getPlayer());
+                    event.getPlayer().sendActionBar(Lang.PLOT_LEAVE.getComponent(event.getPlayer()));
+                }
         );
     }
 
@@ -247,6 +286,8 @@ public class PlotProtection implements Listener {
         }else if(material == Material.BEEHIVE){
             permission = PlotPermission.HARVEST_HIVES;
         }else if(Tag.SIGNS.isTagged(material) && event.getItem() != null && MaterialTags.DYES.isTagged(event.getItem().getType())){
+            permission = PlotPermission.BUILD;
+        }else if(material == Material.BEACON){
             permission = PlotPermission.BUILD;
         }
 
@@ -511,6 +552,52 @@ public class PlotProtection implements Listener {
     public void onEntityUsePortal(EntityPortalEvent event){
         if(event.getEntity().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) return;
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerUsePortal(PlayerPortalEvent event){
+        if(event.getPlayer().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public  void onBlockDispense(BlockDispenseEvent event){
+        Block dispenser = event.getBlock();
+        if(dispenser.getType() != Material.DISPENSER && dispenser.getType() != Material.DROPPER) return;
+        if(dispenser.getBlockData() instanceof Directional directional){
+            Block target = dispenser.getRelative(directional.getFacing());
+            if(dispenser.getChunk() == target.getChunk()) return;
+            if(!canPropagate(plotModule.getPlotAtChunk(ChunkKey.fromChunk(dispenser.getChunk())).orElse(null), plotModule.getPlotAtChunk(ChunkKey.fromChunk(target.getChunk())).orElse(null)))
+                event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onDispensedProjectileHit(ProjectileHitEvent event){
+        Projectile projectile = event.getEntity();
+        if(projectile.getShooter() instanceof Player || projectile.getOrigin() == null) return;
+        ChunkKey sourceChunk = ChunkKey.fromChunk(projectile.getOrigin().getChunk());
+        ChunkKey targetChunk;
+        if(event.getHitEntity() != null) {
+            targetChunk = ChunkKey.fromChunk(event.getHitEntity().getChunk());
+        }else if(event.getHitBlock() !=  null){
+            targetChunk = ChunkKey.fromChunk(event.getHitBlock().getChunk());
+        }else{
+            targetChunk = ChunkKey.fromChunk(projectile.getChunk());
+        }
+        if(sourceChunk.equals(targetChunk)) return;
+        if(!canPropagate(plotModule.getPlotAtChunk(sourceChunk).orElse(null), plotModule.getPlotAtChunk(targetChunk).orElse(null)))
+            event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onBlockBatchChanged(BlockBatchChangedEvent event){
+        Block source = event.getBlock();
+        Optional<Plot> sourcePlot = getFromCache(source.getChunk());
+        event.getChangingBlocks().removeIf(targetBlock -> {
+            Optional<Plot> targetPlot = getFromCache(targetBlock.getChunk());
+            return !canPropagate(sourcePlot.orElse(null), targetPlot.orElse(null));
+        });
     }
 
 

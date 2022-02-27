@@ -2,9 +2,9 @@ package de.neincraft.neincraftplugin.modules;
 
 public class ModuleMeta {
     private NeincraftModule moduleData;
-    private Module moduleInstance;
+    private AbstractModule moduleInstance;
 
-    public ModuleMeta(NeincraftModule data, Module moduleInstance){
+    public ModuleMeta(NeincraftModule data, AbstractModule moduleInstance){
         this.moduleData = data;
         this.moduleInstance = moduleInstance;
     }
@@ -13,7 +13,7 @@ public class ModuleMeta {
         return moduleData;
     }
 
-    public Module getModuleInstance() {
+    public AbstractModule getModuleInstance() {
         return moduleInstance;
     }
 }

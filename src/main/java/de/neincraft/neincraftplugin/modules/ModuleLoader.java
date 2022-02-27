@@ -15,17 +15,17 @@ public class ModuleLoader {
 
     private List<ModuleMeta> instantiate(){
         Reflections reflections = NeincraftUtils.buildReflections();
-        Set<Class<? extends Module>> classes = reflections.getSubTypesOf(Module.class);
+        Set<Class<? extends AbstractModule>> classes = reflections.getSubTypesOf(AbstractModule.class);
 
         List<ModuleMeta> metaList = new ArrayList<>();
 
-        for(Class<? extends Module> current : classes){
+        for(Class<? extends AbstractModule> current : classes){
             NeincraftModule moduleData = current.getAnnotation(NeincraftModule.class);
             if(moduleData == null){
                 NeincraftPlugin.getInstance().getLogger().log(Level.WARNING, String.format("Could not load Module meta of \"%s\". Missing NeincraftModule annotation!", current.getName()));
                 continue;
             }
-            Module moduleInstance;
+            AbstractModule moduleInstance;
             try {
                 moduleInstance = current.getDeclaredConstructor(null).newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {

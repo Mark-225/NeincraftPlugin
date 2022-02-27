@@ -1,5 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots;
 
+import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.plots.dto.*;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.*;
 import de.neincraft.neincraftplugin.modules.plots.repository.PlotRepository;
@@ -9,6 +10,7 @@ import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.hibernate.internal.util.SerializationHelper;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -49,7 +51,7 @@ public class Plot {
         data.setChunks(new ArrayList<>(List.of(chunkData)));
         data.setSubdivisions(new ArrayList<>(List.of(subdivision)));
         Plot plot = new Plot(data);
-        plot.persist();
+        plot.persist(false);
         plot.refreshData();
         plot.refreshChunks();
         return plot;
@@ -83,7 +85,7 @@ public class Plot {
     public boolean createSubdivision(String name){
         if(getSubdivision(name) != null)
             return false;
-        SubdivisionData subdivision = new SubdivisionData(plotData, Collections.emptyList(), name);
+        SubdivisionData subdivision = new SubdivisionData(plotData, new ArrayList<>(), name);
         plotData.getSubdivisions().add(subdivision);
         return true;
     }
@@ -149,7 +151,7 @@ public class Plot {
     public boolean createGroup(String name){
         if(getGroup(name) != null)
             return false;
-        PlotMemberGroup group = new PlotMemberGroup(new GroupId(plotData, name), Collections.emptyList(), Collections.emptyList());
+        PlotMemberGroup group = new PlotMemberGroup(new GroupId(plotData, name), new ArrayList<>(), new ArrayList<>());
         plotData.getGroups().add(group);
         return true;
     }
@@ -294,17 +296,33 @@ public class Plot {
 
     public void refreshData(){
         try(PlotRepository plotRepository = PlotRepository.getRepository()) {
-            this.plotData = plotRepository.findById(id);
+            if(plotRepository != null)
+                this.plotData = plotRepository.findById(id);
         }catch(Exception e){
             e.printStackTrace();
         }
     }
+    public synchronized void persist(boolean async){
+        if(async) {
+            PlotData deepCopy = (PlotData) SerializationHelper.clone(plotData);
+            Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () -> saveData(deepCopy));
+        }else{
+            saveData(plotData);
+        }
+    }
 
     public void persist(){
-        try(PlotRepository repository = PlotRepository.getRepository()){
-            repository.persist(plotData);
-            id = plotData.getId();
-        }catch(Exception e){
+        persist(true);
+    }
+
+    private synchronized void saveData(PlotData data){
+        try (PlotRepository repository = PlotRepository.getRepository()) {
+            if(repository != null) {
+                repository.persist(data);
+                repository.commit();
+            }
+            id = data.getId();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

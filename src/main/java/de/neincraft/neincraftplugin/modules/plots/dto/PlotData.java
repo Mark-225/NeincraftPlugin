@@ -18,7 +18,7 @@ public class PlotData implements Serializable {
     @Column(columnDefinition = "BIGINT")
     private long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "VARCHAR(40)")

@@ -1,6 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots.repository;
 
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.database.DatabaseModule;
 import de.neincraft.neincraftplugin.modules.plots.dto.PlotData;
 import org.hibernate.Session;
@@ -8,14 +8,13 @@ import org.hibernate.Session;
 import javax.persistence.FlushModeType;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public class PlotRepository implements AutoCloseable{
 
     private final Session session;
 
     public static PlotRepository getRepository(){
-        Optional<DatabaseModule> oDatabase = Module.getInstance(DatabaseModule.class);
+        Optional<DatabaseModule> oDatabase = AbstractModule.getInstance(DatabaseModule.class);
         if(oDatabase.isEmpty()) return null;
         return new PlotRepository(oDatabase.get().getSession());
     }
@@ -32,12 +31,10 @@ public class PlotRepository implements AutoCloseable{
 
     public void deleteById(long plotID){
         session.createQuery("DELETE FROM PlotData p WHERE p.id = :id").setParameter("id", plotID).executeUpdate();
-        session.getTransaction().commit();
     }
 
     public void delete(PlotData plot){
         session.delete(plot);
-        session.getTransaction().commit();
     }
 
     public PlotData findById(long id){
@@ -46,6 +43,9 @@ public class PlotRepository implements AutoCloseable{
 
     public void persist(PlotData plotData){
         session.saveOrUpdate(plotData);
+    }
+
+    public void commit(){
         session.getTransaction().commit();
     }
 

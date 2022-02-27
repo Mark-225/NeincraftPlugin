@@ -1,6 +1,5 @@
 package de.neincraft.neincraftplugin.modules.playerstats.chat;
 
-import de.neincraft.neincraftplugin.modules.Module;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerStats;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
@@ -13,8 +12,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Optional;
 
 public class NeincraftChatRenderer implements ChatRenderer {
 
@@ -30,15 +27,17 @@ public class NeincraftChatRenderer implements ChatRenderer {
         String name = source.getName();
         MineDown preset;
         PlayerLanguage lang = PlayerLanguage.ENGLISH;
+        PlayerLanguage explicitLanguage = PlayerLanguage.ENGLISH;
         if(viewer instanceof Player player){
             lang = playerStats.getOrCreate(player.getUniqueId()).getLanguage();
             preset = Lang.CHAT_TEMPLATE.getMinedown(lang, player);
+            explicitLanguage = lang == PlayerLanguage.AUTO ? PlayerLanguage.fromLocale(player.locale()) : lang;
         }else{
             preset = Lang.CHAT_TEMPLATE.getMinedown(PlayerLanguage.ENGLISH, null);
         }
         String label;
         PlayerData pd = playerStats.getOrCreate(source.getUniqueId());
-        if (lang == PlayerLanguage.GERMAN) {
+        if (explicitLanguage == PlayerLanguage.GERMAN) {
             label = pd.getGermanLabel();
         } else {
             label = pd.getEnglishLabel();

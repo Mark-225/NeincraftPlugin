@@ -1,11 +1,9 @@
 package de.neincraft.neincraftplugin.modules.playerstats;
 
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.database.DatabaseModule;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
-import org.hibernate.FlushMode;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 
 import javax.persistence.FlushModeType;
 import java.util.Optional;
@@ -15,7 +13,7 @@ public class PlayerDataRepo implements AutoCloseable{
     private final Session session;
 
     public static PlayerDataRepo getRepository(){
-        Optional<DatabaseModule> oDatabase = Module.getInstance(DatabaseModule.class);
+        Optional<DatabaseModule> oDatabase = AbstractModule.getInstance(DatabaseModule.class);
         if(oDatabase.isEmpty()) return null;
         return new PlayerDataRepo(oDatabase.get().getSession());
     }
@@ -37,6 +35,9 @@ public class PlayerDataRepo implements AutoCloseable{
 
     public void save(PlayerData pd){
         session.saveOrUpdate(pd);
+    }
+
+    public void commit(){
         session.getTransaction().commit();
     }
 

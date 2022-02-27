@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.database;
 import com.zaxxer.hikari.HikariDataSource;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -29,7 +29,7 @@ import java.util.logging.Level;
         id = "database",
         isVital = true
 )
-public class DatabaseModule extends Module {
+public class DatabaseModule extends AbstractModule {
 
     HikariDataSource hikariDataSource;
 
@@ -75,11 +75,13 @@ public class DatabaseModule extends Module {
             settings.put(Environment.SHOW_SQL, false);
             settings.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
             settings.put(Environment.STORAGE_ENGINE, "hibernate.dialect.storage_engine=innodb");
+            settings.put(Environment.CONNECTION_PROVIDER, "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
 
             settings.put("hibernate.hikari.connectionTimeout", "20000");
             settings.put("hibernate.hikari.minimumIdle", "10");
-            settings.put("hibernate.hikari.maximumPoolSize", "20");
-            settings.put("hibernate.hikari.idleTimeout", "300000");
+            settings.put("hibernate.hikari.maximumPoolSize", "50");
+            settings.put("hibernate.hikari.idleTimeout", "100000");
+            settings.put("hibernate.hikari.maxLifetime", "300000");
 
             registryBuilder.applySettings(settings);
 

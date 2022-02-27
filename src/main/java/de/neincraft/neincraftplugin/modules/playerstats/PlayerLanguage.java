@@ -11,6 +11,6 @@ public enum PlayerLanguage {
         if(locale == null) return null;
         if(locale.getLanguage().equals("en")) return ENGLISH;
         if(locale.getLanguage().equals("de")) return GERMAN;
-        return null;
+        return ENGLISH;
     }
 }

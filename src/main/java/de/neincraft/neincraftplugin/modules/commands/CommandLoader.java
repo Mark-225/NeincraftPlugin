@@ -1,6 +1,6 @@
 package de.neincraft.neincraftplugin.modules.commands;
 
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 @NeincraftModule(id = "CommandLoader", isVital = true)
-public class CommandLoader extends Module {
+public class CommandLoader extends AbstractModule {
 
 
     @Override
@@ -24,9 +24,9 @@ public class CommandLoader extends Module {
 
     @Override
     public void preInit() {
-        for(Map.Entry<Class<? extends Module>, Module> entry : Module.getInstances().entrySet()){
-            Class<? extends Module> moduleClass = entry.getKey();
-            Module instance = entry.getValue();
+        for(Map.Entry<Class<? extends AbstractModule>, AbstractModule> entry : AbstractModule.getInstances().entrySet()){
+            Class<? extends AbstractModule> moduleClass = entry.getKey();
+            AbstractModule instance = entry.getValue();
             for(Field f : moduleClass.getDeclaredFields()){
                 if(Modifier.isStatic(f.getModifiers()) || Modifier.isFinal(f.getModifiers()) || !f.isAnnotationPresent(InjectCommand.class) || !CommandExecutor.class.isAssignableFrom(f.getType())) continue;
                 InjectCommand annotation = f.getAnnotation(InjectCommand.class);

@@ -2,9 +2,10 @@ package de.neincraft.neincraftplugin.modules.plots;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.plots.protection.PlotProtection;
+import de.neincraft.neincraftplugin.modules.plots.util.HomeCommand;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
 import de.neincraft.neincraftplugin.modules.commands.InjectCommand;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
@@ -17,6 +18,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @NeincraftModule(id = "plots", requiredModules = {"database"})
-public class PlotModule extends Module {
+public class PlotModule extends AbstractModule {
 
     public static final Pattern PLOT_NAME_PATTERN = Pattern.compile("[\\wÄÖÜäöüßẞ]{3,32}");
 
@@ -41,6 +43,8 @@ public class PlotModule extends Module {
     @InjectCommand("plotadmin")
     private PlotCommand plotAdminCommand;
 
+    @InjectCommand("home")
+    private HomeCommand homeCommand;
 
     @Override
     protected boolean initModule() {
@@ -73,14 +77,16 @@ public class PlotModule extends Module {
     }
 
     private void loadAllPlots(){
-        PlotRepository repository = PlotRepository.getRepository();
-        if(repository == null){
-            getLogger().log(Level.SEVERE, "Could not create database repository while loading plots!");
-            return;
+        try(PlotRepository repository = PlotRepository.getRepository()){
+            if(repository != null){
+                List<PlotData> plots = repository.findAll();
+                repository.close();
+                loadedPlots = plots.stream().map(Plot::getPlotFromData).collect(Collectors.toList());
+            }
+        }catch(Exception e){
+            getLogger().log(Level.SEVERE, "Could not load plots!", e);
         }
-        List<PlotData> plots = repository.findAll();
-        repository.close();
-        loadedPlots = plots.stream().map(Plot::getPlotFromData).collect(Collectors.toList());
+
     }
 
     public Optional<Plot> getPlotAtChunk(ChunkKey chunk){
@@ -93,11 +99,15 @@ public class PlotModule extends Module {
     }
 
     public void deletePlot(Plot plot){
-        PlotRepository pr = PlotRepository.getRepository();
-        if(pr == null) return;
-        pr.delete(plot.getPlotData());
-        loadedPlots.remove(plot);
-        pr.close();
+        try(PlotRepository pr = PlotRepository.getRepository()){
+            if(pr != null){
+                pr.delete(plot.getPlotData());
+                pr.commit();
+                loadedPlots.remove(plot);
+            }
+        }catch(Exception e){
+            getLogger().log(Level.WARNING, "Could not delete Plot", e);
+        }
     }
 
     public Optional<Plot> getLoadedPlotById(long plotId){
@@ -168,6 +178,10 @@ public class PlotModule extends Module {
 
     public List<Plot> getPlotsWithPermissionOnMain(UUID player, PlotPermission permission){
         return loadedPlots.stream().filter(plot -> plot.resolvePermission(plot.getSubdivision("main"), plot.getPlayerGroup(player), permission)).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public List<Plot> getLoadedPlots(){
+        return Collections.unmodifiableList(loadedPlots);
     }
 
     @Override

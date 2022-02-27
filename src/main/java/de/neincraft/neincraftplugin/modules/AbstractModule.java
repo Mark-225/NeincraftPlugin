@@ -3,15 +3,14 @@ package de.neincraft.neincraftplugin.modules;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-public abstract class Module {
+public abstract class AbstractModule {
 
-    private static ConcurrentHashMap<Class<? extends Module>, Module> instances = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Class<? extends AbstractModule>, AbstractModule> instances = new ConcurrentHashMap<>();
 
     protected static void clearModuleRegistry(){
         instances.clear();
@@ -21,14 +20,14 @@ public abstract class Module {
         return NeincraftPlugin.getInstance().getLogger();
     }
 
-    public Module(){
+    public AbstractModule(){
         if(!instances.containsKey(this.getClass()))
             instances.put(this.getClass(), this);
     }
 
     @Nonnull
-    public static <T extends Module> Optional<T> getInstance(Class<T> moduleClass){
-        Module m = instances.get(moduleClass);
+    public static <T extends AbstractModule> Optional<T> getInstance(Class<T> moduleClass){
+        AbstractModule m = instances.get(moduleClass);
         if(m == null || !moduleClass.isAssignableFrom(m.getClass()))
             return Optional.empty();
         @SuppressWarnings("unchecked")
@@ -36,7 +35,7 @@ public abstract class Module {
         return Optional.of(t);
     }
 
-    public static Map<Class<? extends Module>, Module> getInstances(){
+    public static Map<Class<? extends AbstractModule>, AbstractModule> getInstances(){
         return instances;
     }
 

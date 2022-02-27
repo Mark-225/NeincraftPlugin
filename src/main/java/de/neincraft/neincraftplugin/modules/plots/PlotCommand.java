@@ -2,7 +2,7 @@ package de.neincraft.neincraftplugin.modules.plots;
 
 import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
-import de.neincraft.neincraftplugin.modules.Module;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.commands.NeincraftCommand;
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
@@ -38,7 +38,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
     public void tabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args, List<String> completions) {
         if(!(commandSender instanceof Player)) return;
         Player player = (Player) commandSender;
-        Optional<PlotModule> oPm = Module.getInstance(PlotModule.class);
+        Optional<PlotModule> oPm = AbstractModule.getInstance(PlotModule.class);
         if(oPm.isEmpty()) return;
         PlotModule pm = oPm.get();
         boolean adminMode = label.toLowerCase().endsWith("admin");
@@ -197,13 +197,13 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
             commandSender.sendMessage(Lang.WRONG_EXECUTOR.getComponent(null, null));
             return true;
         }
-        Optional<PlayerStats> stats = Module.getInstance(PlayerStats.class);
+        Optional<PlayerStats> stats = AbstractModule.getInstance(PlayerStats.class);
         if(stats.isEmpty()){
             player.sendMessage(Lang.FATAL_ERROR.getComponent(PlayerLanguage.AUTO, player));
             getLogger().log(Level.WARNING, "Module PlayerData not present when it should be");
             return true;
         }
-        Optional<PlotModule> oPlotModule = Module.getInstance(PlotModule.class);
+        Optional<PlotModule> oPlotModule = AbstractModule.getInstance(PlotModule.class);
         if(oPlotModule.isEmpty()){
             player.sendMessage(Lang.FATAL_ERROR.getComponent(PlayerLanguage.AUTO, player));
             getLogger().log(Level.WARNING, "Module PlotModule not present when it should be");
@@ -814,7 +814,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 if(memberPlots.isEmpty()){
                     player.sendMessage(Lang.LIST_EMPTY.getComponent(pd.getLanguage(), player));
                 }else{
-                    player.sendMessage(new MineDown("&gray&" + memberPlots.stream().map(plot -> NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) + ":" + plot.getPlotData().getName()).sorted().collect(Collectors.joining(", "))).toComponent());
+                    player.sendMessage(new MineDown("&gray&" + memberPlots.stream().map(plot -> (plot.isServerPlot() ? "" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner())) + ":" + plot.getPlotData().getName()).sorted().collect(Collectors.joining(", "))).toComponent());
                 }
 
                 player.sendMessage(Lang.PLOT_LIST_HOME.getComponent(pd.getLanguage(), player));
@@ -828,7 +828,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                             concat the two streams and join with ", " as delimiter.
                              */
                             Stream.concat(ownPlots.stream().map(plot -> plot.getPlotData().getName()).sorted(),
-                                    homePlots.stream().filter(plot -> !targetPlayer.equals(plot.getPlotData().getOwner())).map(plot -> NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) + ":" + plot.getPlotData().getName()).sorted())
+                                    homePlots.stream().filter(plot -> !targetPlayer.equals(plot.getPlotData().getOwner())).map(plot -> (plot.isServerPlot() ? "" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner())) + ":" + plot.getPlotData().getName()).sorted())
                                     .collect(Collectors.joining(", "))).toComponent());
                 }
             }

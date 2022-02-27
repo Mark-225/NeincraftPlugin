@@ -13,3 +13,15 @@ commands:
     aliases:
       - gsadmin
     permission: neincraft.commands.admin.plotadmin
+  stats:
+    permission: neincraft.commands.user.stats
+  testlang:
+    permission: neincraft.commands.admin.testlang
+  home:
+    permission: neincraft.commands.user.home
+    aliases:
+      - spawn
+  portal:
+    permission: neincraft.commands.admin.portal
+  timber:
+    permission: neincraft.commands.user.timber

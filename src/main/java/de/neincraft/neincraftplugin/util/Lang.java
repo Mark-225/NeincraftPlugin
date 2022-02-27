@@ -23,16 +23,52 @@ public enum Lang {
     NO("Nein", "No"),
     DEFAULT("Standard", "Default"),
     LIST_EMPTY("&red&Keine Einträge gefunden", "&red&No entries found"),
+    INVENTORY_FULL("&red&Du hast keinen freien Platz im Inventar!", "&red&Your Inventory is full!"),
 
     //stats
     FIRST_JOIN("&green&Willkommen zu deinem ersten Besuch auf Neincraft, [%player%](color=yellow)!", "&green&Welcome to your first visit on Neincraft, [%player%](color=yellow)!"),
-    CHAT_TEMPLATE("%label% [%name%](color=white) [>>](color=gray)", "%label% [%name%](color=white) [>>](color=gray) "),
+    CHAT_TEMPLATE("%label% [%name%](white) [>>](gray) ", "%label% [%name%](white) [>>](gray) "),
+    MSG_TEMPLATE("[%name%](white) [->](gray) [%target%](white) [>>](gray) ", "[%name%](white) [->](gray) [%target%](white) [>>](gray) "),
+    PLAYER_AFK("&yellow&[AFK] %player% ist nun abwesend", "&yellow&[AFK] %player% is now afk"),
+    PLAYER_AFK_RND_1("&yellow&[AFK] Hat jemand %player% gesehen?", "&yellow&[AFK] Has somebody seen %player%?"),
+    PLAYER_AFK_RND_2("&yellow&[AFK] %player% hat keine Lust mehr", "&yellow&[AFK] %player% doesn't feel like playing anymore"),
+    PLAYER_AFK_RND_3("&yellow&[AFK] %player% ignoriert uns", "&yellow&[AFK] %player% is ignoring us"),
+    PLAYER_AFK_RND_4("&yellow&[AFK] %player% braucht eine Pause", "&yellow&[AFK] %player% needs a break"),
+    PLAYER_AFK_RND_5("&yellow&[AFK] Psst... %player% ist eingeschlafen", "&yellow&[AFK] Shh... %player% is taking a nap"),
+    PLAYER_AFK_RETURN("&yellow&[AFK] %player% ist wieder da", "&yellow&[AFK] %player% is back"),
+    PLAYER_STATS("""
+            &yellow&Statistiken für [%player%](white):
+            
+            [Aktive Spielzeit:](white) [%playtime%](gold)
+            
+            [Grundstücke:](white) [%plots%](gold) [(%pointplots%+%bonusplots%)](gray)
+            [Davon frei:](white) [%freeplots%](gold)
+            [Fortschritt:](white) %plotprogress% [(%plotpoints%/%requiredplot%)](gray)
+            
+            [Chunks:](white) [%chunks%](gold) [(%pointchunks%+%bonuschunks%)](gray)
+            [Davon frei:](white) [%freechunks%](gold)
+            [Fortschritt:](white) %chunkprogress% [(%chunkpoints%/%requiredchunk%)](gray)
+            """,
+            """
+            &yellow&Statistics for [%player%](white):
+            
+            [Active playtime:](white) [%playtime%](gold)
+            
+            [Plots:](white) [%plots%](gold) [(%pointplots%+%bonusplots%)](gray)
+            [Free:](white) [%freeplots%](gold)
+            [Progress:](white) %plotprogress% [(%plotpoints%/%requiredplot%)](gray)
+            
+            [Chunks:](white) [%chunks%](gold) [(%pointchunks%+%bonuschunks%)](gray)
+            [Free:](white) [%freechunks%](gold)
+            [Progress:](white) %chunkprogress% [(%chunkpoints%/%requiredchunk%)](gray)
+            """),
+
     //Plots
     INVALID_WORLD("&red&In dieser Welt können keine Grundstücke erstellt werden!", "&red&Can't create plots in this world!"),
-    PLOT_LIST("&yellow&Grundstücksliste [%player%](white):\n", "&yellow&Plot list [%player%](white):\n"),
-    PLOT_LIST_OWNER("&gray&Besitzt:", "&gray&Owns:"),
-    PLOT_LIST_MEMBER("&gray&Ist einer Gruppe zugewiesen:", "&gray&Is member of a group:"),
-    PLOT_LIST_HOME("&gary&Hat Teleportrechte:", "&gray&Has teleportation permissions:"),
+    PLOT_LIST("&yellow&Grundstücksliste [%player%](white):", "&yellow&Plot list [%player%](white):"),
+    PLOT_LIST_OWNER("\n&yellow&Besitzt:", "\n&yellow&Owns:"),
+    PLOT_LIST_MEMBER("\n&yellow&Ist einer Gruppe zugewiesen:", "\n&yellow&Is member of a group:"),
+    PLOT_LIST_HOME("\n&yellow&Hat Teleportrechte:", "\n&yellow&Has teleportation permissions:"),
     PLOT_NOT_FOUND("&red&Grundstück nicht gefunden. Bitte überprüfe den eingegebenen Namen!", "&red&Plot not found. Please verify your provided name!"),
     ALREADY_OCCUPIED("&red&An dieser Position befindet sich bereits ein Grundstück!", "&red&There is already a plot at this location!"),
     INSUFFICIENT_PLOTS("&red&Du kannst keine weiteren Grundstücke erstellen!", "&red&You can't create any further plots!"),
@@ -114,7 +150,27 @@ public enum Lang {
     PLOT_ENTER("&yellow&Du betrittst das Grundstück [%plot% \\[%subdivision%\\]](color=white) von [%owner%](color=white)", "&yellow&You are entering the plot [%plot% \\[%subdivision%\\]](color=white) by [%owner%](color=white)"),
     PLOT_LEAVE("&green&Du bist nun auf freiem Gebiet", "&green&You are now on unclaimed land"),
     PLOT_CANT_ENTER("&red&Du darfst diesen Bereich nicht betreten!", "&red&You are not allowed to enter this area!"),
-    PLOT_CANT_MODIFY("&red&Das darfst du hier nicht tun!", "&red&You are not allowed to do that here!");
+    PLOT_CANT_MODIFY("&red&Das darfst du hier nicht tun!", "&red&You are not allowed to do that here!"),
+    PLOT_PVP_ACTIVE("&red&PVP AKTIV", "&red&PVP ACTIVE"),
+    PLOT_CANT_TELEPORT("&red&Du darfst dich nicht auf dieses Grundstück teleportieren!", "&red&You are not allowed to teleport to this plot!"),
+
+    //portals
+    PORTAL_ALREADY_EXISTS("&reed&Ein Portal mit diesem Namen existiert bereits!", "&red&A portal with this name already exists"),
+    PORTAL_CREATED("&green&Portal erstellt! Lege Bereich und Zielpunkt mit [/portal edit %portal%](color=yellow run_command=/portal edit %portal% show_text=Klicken zum Ausführen)", "&green&Portal created! Define an area and target using [/portal edit %portal%](color=yellow run_command=/portal edit %portal% show_text=Click to execute)"),
+    PORTAL_DELETED("&green&Portal gelöscht.", "&green&Portal deleted"),
+    PORTAL_BEGIN_EDIT("&dark_purple&Portal-Tool für [%portal%](white): Zwei Blöcke linksklicken zum Definieren des Portalbereichs, rechtsklicken zum Setzen des Zielpunktes auf deine aktuelle position.", "&dark_purple&Portal tool for [%portal%](white): Left-click two blocks to define the area, right-click to set your current location as the portal's destination."),
+    PORTAL_NOT_FOUND("&red&Ein portal mit diesem Namen existiert nicht.", "&red&A portal with this name does not exist."),
+    PORTAL_FIRST_POS_SET("&yellow&Erste Position gesetzt.", "&yellow&First position set"),
+    PORTAL_AREA_DEFINED("&green&Zwei positionen gesetzt. Der Portalbereich ist jetzt vollständig definiert. Linksklicke erneut, um den Bereich neu zu definieren.", "&green&Two positions set. The portal area is now defined completely. Left-click again to redefine the area."),
+    PORTAL_DEST_SET("&green&Portal-Ziel auf aktuelle Position gesetzt.", "&green&Portal destination set to current location!"),
+
+    //lifts
+    LIFT_ENTER("&yellow&Du hast einen Aufzug betreten. Hoch: Springen, Runter: Schleichen", "&yellow&You entered a lift. Up: Jump, Down: Sneak"),
+
+    //timber
+    TIMBER_ACTIVE("&green&Timber Modus aktiviert!", "&green&Timber mode activated!"),
+    TIMBER_INACTIVE("&green&Timber Modus deaktiviert!", "&green&Timber mode deactivated!"),
+    TIMBER_WARNING("&red&Timber Modus ist aktiv!", "&red&Timber mode is active!");
 
 
     private final String german;
