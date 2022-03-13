@@ -34,7 +34,7 @@ public class CommandLoader extends AbstractModule {
                 if(command == null) continue;
                 CommandExecutor executor = null;
                 try {
-                    executor = (CommandExecutor) f.getType().getDeclaredConstructor(null).newInstance(null);
+                    executor = (CommandExecutor) f.getType().getDeclaredConstructor(new Class[0]).newInstance(new Object[0]);
                 } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     getLogger().log(Level.WARNING, "An error occured during command instantiation", e);
                     continue;

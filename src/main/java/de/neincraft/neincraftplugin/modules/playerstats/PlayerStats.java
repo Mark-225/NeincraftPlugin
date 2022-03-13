@@ -12,15 +12,15 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.MessageType;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.event.server.TabCompleteEvent;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -38,6 +38,9 @@ public class PlayerStats extends AbstractModule implements Listener {
 
     @InjectCommand("stats")
     private StatsCommand statsCommand;
+
+    @InjectCommand("label")
+    private LabelCommand labelCommand;
 
     @Override
     protected boolean initModule() {

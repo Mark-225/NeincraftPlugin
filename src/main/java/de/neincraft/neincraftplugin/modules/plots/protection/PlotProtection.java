@@ -5,6 +5,7 @@ import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.AbstractModule;
+import de.neincraft.neincraftplugin.modules.blockentityproperties.BEProperty;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.PlotModule;
@@ -39,6 +40,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.world.StructureGrowEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.spigotmc.event.entity.EntityMountEvent;
 
 import java.util.*;
@@ -150,7 +152,7 @@ public class PlotProtection implements Listener {
                     event.getPlayer().sendActionBar(Lang.PLOT_ENTER.getMinedown(event.getPlayer()).replace(
                             "plot", plot.getPlotData().getName(),
                             "owner", plot.isServerPlot() ? "Server" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner()),
-                            "subdivision", plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision().getName()
+                            "subdivision", plot.getChunkData(ChunkKey.fromChunk(event.getTo().getChunk())).getSubdivision().getSubdivisionId().getName()
                     ).toComponent());
                 },
                 () ->{
@@ -334,6 +336,12 @@ public class PlotProtection implements Listener {
         if(!(event.getPlayer() instanceof Player)) return;
         Player player = (Player) event.getPlayer();
         if(event.getInventory().getHolder() instanceof Container container){
+            NamespacedKey key = new NamespacedKey(NeincraftPlugin.getInstance(), BEProperty.PUBLIC.getKeyIdentifier());
+            if(container.getPersistentDataContainer().has(key, PersistentDataType.LONG)){
+                Optional<Plot> oPlot = plotModule.getPlotAtChunk(ChunkKey.fromChunk(container.getChunk()));
+                Long id = container.getPersistentDataContainer().get(key, PersistentDataType.LONG);
+                if(oPlot.isPresent() && id != null && id == oPlot.get().getPlotData().getId()) return;
+            }
             handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, container.getChunk(), event::setCancelled);
         }else if(event.getInventory().getHolder() instanceof DoubleChest doubleChest && doubleChest.getLeftSide() instanceof Container leftContainer && doubleChest.getRightSide() instanceof Container rightContainer){
             handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, leftContainer.getChunk(), event::setCancelled);
@@ -561,7 +569,7 @@ public class PlotProtection implements Listener {
     }
 
     @EventHandler
-    public  void onBlockDispense(BlockDispenseEvent event){
+    public  void onBlockDispense(BlockPreDispenseEvent event){
         Block dispenser = event.getBlock();
         if(dispenser.getType() != Material.DISPENSER && dispenser.getType() != Material.DROPPER) return;
         if(dispenser.getBlockData() instanceof Directional directional){

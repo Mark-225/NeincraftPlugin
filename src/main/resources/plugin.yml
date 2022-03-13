@@ -1,8 +1,10 @@
 name: NeincraftPlugin
 version: @version@
 main: de.neincraft.neincraftplugin.NeincraftPlugin
-api-version: 1.17
+api-version: 1.18
 authors: [ Mark_225 ]
+softdepend:
+  - BlueMap
 
 commands:
   plot:
@@ -25,3 +27,14 @@ commands:
     permission: neincraft.commands.admin.portal
   timber:
     permission: neincraft.commands.user.timber
+  label:
+    permission: neincraft.commands.admin.label
+  storage:
+    permission: neincraft.commands.user.storage
+    aliases:
+      - s
+  tpa:
+    permission: neincraft.commands.user.tpa
+    aliases:
+      - tpaccept
+      - tpahere

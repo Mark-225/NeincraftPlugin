@@ -1,5 +1,6 @@
 package de.neincraft.neincraftplugin.modules.plots.dto;
 
+import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.SubdivisionId;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -11,40 +12,23 @@ import java.util.List;
 @Entity
 public class SubdivisionData implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(columnDefinition = "BIGINT")
-    private long subdivisionId;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    private PlotData plot;
+    @EmbeddedId
+    private SubdivisionId subdivisionId;
 
     @OneToMany(mappedBy = "settingId.subdivision", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<PlotSettingsEntry> settings;
 
-    @Column
-    private String name;
-
     public SubdivisionData() {
     }
 
-    public SubdivisionData(PlotData plot, List<PlotSettingsEntry> settings, String name) {
-        this.plot = plot;
+    public SubdivisionData(SubdivisionId subdivisionId, List<PlotSettingsEntry> settings) {
+        this.subdivisionId = subdivisionId;
         this.settings = settings;
-        this.name = name;
     }
 
-    public long getSubdivisionId() {
+    public SubdivisionId getSubdivisionId() {
         return subdivisionId;
-    }
-
-    public PlotData getPlot() {
-        return plot;
-    }
-
-    public void setPlot(PlotData plot) {
-        this.plot = plot;
     }
 
     public List<PlotSettingsEntry> getSettings() {
@@ -53,13 +37,5 @@ public class SubdivisionData implements Serializable {
 
     public void setSettings(List<PlotSettingsEntry> settings) {
         this.settings = settings;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 }

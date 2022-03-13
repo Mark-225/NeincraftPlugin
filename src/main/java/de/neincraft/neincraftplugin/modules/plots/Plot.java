@@ -36,7 +36,7 @@ public class Plot {
         data.setHome(home);
         data.setName(name);
         data.setOwner(owner);
-        SubdivisionData subdivision = new SubdivisionData(data, new ArrayList<>(), "main");
+        SubdivisionData subdivision = new SubdivisionData(new SubdivisionId(data, "main"), new ArrayList<>());
         ChunkData chunkData = new ChunkData(startChunk, data, subdivision);
         PlotMemberGroup members = new PlotMemberGroup(new GroupId(data, "members"), new ArrayList<>(), null);
         members.setGroupPermissions(PermissionFlag.getMemberDefaults(members, subdivision));
@@ -75,7 +75,7 @@ public class Plot {
 
     public SubdivisionData getSubdivision(String name){
         for(SubdivisionData subdivision : plotData.getSubdivisions()){
-            if(subdivision.getName().equalsIgnoreCase(name)){
+            if(subdivision.getSubdivisionId().getName().equalsIgnoreCase(name)){
                 return subdivision;
             }
         }
@@ -85,13 +85,13 @@ public class Plot {
     public boolean createSubdivision(String name){
         if(getSubdivision(name) != null)
             return false;
-        SubdivisionData subdivision = new SubdivisionData(plotData, new ArrayList<>(), name);
+        SubdivisionData subdivision = new SubdivisionData(new SubdivisionId(plotData, name), new ArrayList<>());
         plotData.getSubdivisions().add(subdivision);
         return true;
     }
 
     public boolean deleteSubdivision(SubdivisionData subdivisionData){
-        if(subdivisionData == null || protectedSubdivisions.contains(subdivisionData.getName()))
+        if(subdivisionData == null || protectedSubdivisions.contains(subdivisionData.getSubdivisionId().getName()))
             return false;
         SubdivisionData mainSubdivision = getSubdivision("main");
         plotData.getChunks().stream().filter(chunkData -> chunkData.getSubdivision() == subdivisionData).forEach(chunkData -> chunkData.setSubdivision(mainSubdivision));
@@ -190,7 +190,7 @@ public class Plot {
 
     public boolean resolveSettingsValue(SubdivisionData subdivision, PlotSetting setting, Consumer<SubdivisionData> subdivisionCallback){
         PlotSettingsEntry entry = getSettingsEntry(subdivision, setting);
-        if(entry == null && !subdivision.getName().equalsIgnoreCase("main"))
+        if(entry == null && !subdivision.getSubdivisionId().getName().equalsIgnoreCase("main"))
             return resolveSettingsValue(getSubdivision("main"), setting, subdivisionCallback);
         if(subdivisionCallback != null)
             subdivisionCallback.accept(entry != null ? subdivision : null);

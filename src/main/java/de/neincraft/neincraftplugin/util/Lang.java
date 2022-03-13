@@ -24,6 +24,7 @@ public enum Lang {
     DEFAULT("Standard", "Default"),
     LIST_EMPTY("&red&Keine Einträge gefunden", "&red&No entries found"),
     INVENTORY_FULL("&red&Du hast keinen freien Platz im Inventar!", "&red&Your Inventory is full!"),
+    UNKNOWN_COMMAND("&red&Unbekannter Befehl", "&red&Unknown Command"),
 
     //stats
     FIRST_JOIN("&green&Willkommen zu deinem ersten Besuch auf Neincraft, [%player%](color=yellow)!", "&green&Welcome to your first visit on Neincraft, [%player%](color=yellow)!"),
@@ -62,6 +63,7 @@ public enum Lang {
             [Free:](white) [%freechunks%](gold)
             [Progress:](white) %chunkprogress% [(%chunkpoints%/%requiredchunk%)](gray)
             """),
+    LABEL_UPDATED("[Label aktualisiert!](green)\n%german%\n%english%", "[Label updated!](green)\n%german%\n%english%"),
 
     //Plots
     INVALID_WORLD("&red&In dieser Welt können keine Grundstücke erstellt werden!", "&red&Can't create plots in this world!"),
@@ -170,7 +172,36 @@ public enum Lang {
     //timber
     TIMBER_ACTIVE("&green&Timber Modus aktiviert!", "&green&Timber mode activated!"),
     TIMBER_INACTIVE("&green&Timber Modus deaktiviert!", "&green&Timber mode deactivated!"),
-    TIMBER_WARNING("&red&Timber Modus ist aktiv!", "&red&Timber mode is active!");
+    TIMBER_WARNING("&red&Timber Modus ist aktiv!", "&red&Timber mode is active!"),
+
+    //BlockEntityProperties
+    BE_HEADER("Blockeigenschaften", "Block properties"),
+    BE_ACTIVATE("&green&Aktivieren", "&green&Activate"),
+    BE_DEACTIVATE("&red&Deaktivieren", "&red&Deactivate"),
+    BE_NAME_INFDISP("Unendlicher Dispenser", "Infinite dispenser"),
+    BE_DESC_INFDISP("Der Dispenser/Dropper verbraucht keine Items", "The dispenser/dropper does not consume items"),
+    BE_NAME_PUBLIC("Öffentlicher Container", "Public container"),
+    BE_DESC_PUBLIC("Deaktiviert den Schutz vor fremden Spielern.","Deactivates protection from other players."),
+
+    //storage
+    STORAGE_CAPTION("Storage", "Storage"),
+    STORAGE_INFO_ITEM("Informationen:", "Information:"),
+    STORAGE_CAPACITY("&yellow&Kapazität: [%used%](gold)/[%total%](gold)", "&yellow&Capacity: [%used%](gold)/[%total%](gold)"),
+    STORAGE_PAGE("&yellow& Seite: [%current%](gold)/[%total%](gold)", "&yellow& Page: [%current%](gold)/[%total%](gold)"),
+    STORAGE_NEXT_PAGE("Nächste Seite", "Next page"),
+    STORAGE_PREV_PAGE("Vorherige Seite", "Previous page"),
+    STORAGE_ITEM_AMOUNT_PREFIX("&light_purple&Anzahl in Storage:", "&light_purple&Amount in storage:"),
+    STORAGE_LOADING("&yellow&Storage wird initialisiert... Dieser Vorgang könnte einen Moment dauern.", "&yellow&Storage is being initialized... This process could take a moment."),
+
+    //teleport
+    TP_REQUEST_SENT("&green&Anfrage gesendet!", "&green&Request Sent!"),
+    NO_OPEN_REQUESTS("&red&Keine offenen Anfragen vorhanden!", "&red&No open requests available!"),
+    TP_REQUEST_COOLDOWN("&red&Bitte warte, bis deine vorherige Anfrage abgelaufen ist!", "&red&Please wait until your previous request expired!"),
+    TP_REQUEST_ACCEPTED("&green&Anfrage akzeptiert!", "&green&Request accepted!"),
+    TPA_REQUEST_RECEIVED("&yellow& [%player%](white) möchte sich zu dir teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)",
+            "&yellow& [%player%](white) wants to teleport to you\nAccept using [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)"),
+    TPAHERE_REQUEST_RECEIVED("&yellow& [%player%](white) dich zu sich teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)",
+            "&yellow& [%player%](white) wants yout to teleport to them!\nAccept using [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)");
 
 
     private final String german;

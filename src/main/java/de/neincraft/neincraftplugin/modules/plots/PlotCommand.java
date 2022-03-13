@@ -76,7 +76,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 }else if(args.length == 2){
                     Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
                     if(plot == null) return;
-                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).toList());
+                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(sd -> sd.getSubdivisionId().getName()).toList());
                 }
             }
 
@@ -86,7 +86,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 }else if(args.length == 2){
                     Plot plot = assertOnOwnPlot(player, pm, adminMode, true);
                     if(plot == null) return;
-                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).toList());
+                    completions.addAll(plot.getPlotData().getSubdivisions().stream().map(sd -> sd.getSubdivisionId().getName()).toList());
                 }else if(args.length == 3 && args[2].length() == 0){
                     completions.add("[setting]");
                 }else if(args.length == 3){
@@ -460,7 +460,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 Plot plot = assertOnOwnPlot(player, pm, adminMode);
                 if(plot == null) break;
                 player.sendMessage(Lang.PLOT_SUBDIVISION_LIST.getComponent(pd.getLanguage(), player));
-                player.sendMessage(new MineDown("&gold&" + plot.getPlotData().getSubdivisions().stream().map(SubdivisionData::getName).collect(Collectors.joining(", "))).toComponent());
+                player.sendMessage(new MineDown("&gold&" + plot.getPlotData().getSubdivisions().stream().map(sd -> sd.getSubdivisionId().getName()).collect(Collectors.joining(", "))).toComponent());
             }
 
             case "setsetting" ->{
@@ -537,7 +537,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                             "description", setting.getDescription().getRawString(pd.getLanguage(), player),
                             "value", value ? Lang.YES.getRawString(pd.getLanguage(), player) : Lang.NO.getRawString(pd.getLanguage(), player),
                             "valueColor", value ? "green" : "red",
-                            "defined", definedIn[0] != null ? definedIn[0].getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
+                            "defined", definedIn[0] != null ? definedIn[0].getSubdivisionId().getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
                     ).toComponent());
                 }
             }
@@ -747,7 +747,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                 }
                 player.sendMessage(Lang.PLOT_PERMISSION_LIST.getMinedown(pd.getLanguage(), player).replace(
                         "group", group.getGroupId().getGroupName(),
-                        "subdivision", subdivisionData.getName()
+                        "subdivision", subdivisionData.getSubdivisionId().getName()
                 ).toComponent());
                 for(PlotPermission permission : PlotPermission.values()){
                     SubdivisionData[] definedInSubdivision = new SubdivisionData[1];
@@ -760,7 +760,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                             "permission", permission.name().toLowerCase(),
                             "value", value ? Lang.YES.getRawString(pd.getLanguage(), player) : Lang.NO.getRawString(pd.getLanguage(), player),
                             "valueColor", value ? "green" : "red",
-                            "subdivision", definedInSubdivision[0] != null ? definedInSubdivision[0].getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player),
+                            "subdivision", definedInSubdivision[0] != null ? definedInSubdivision[0].getSubdivisionId().getName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player),
                             "group", definedInGroup[0] != null ? definedInGroup[0].getGroupId().getGroupName() : Lang.DEFAULT.getRawString(pd.getLanguage(), player)
                     ).toComponent());
                 }
@@ -893,7 +893,7 @@ public class PlotCommand extends NeincraftCommand implements CommandExecutor, Si
                     "chunks", "" + plot.getPlotData().getChunks().size(),
                     "owner", plot.getPlotData().getOwner() != null ? NeincraftUtils.uuidToName(plot.getPlotData().getOwner()) :  "Server",
                     "group", plot.getPlayerGroup(p.getUniqueId()).getGroupId().getGroupName(),
-                    "subdivision", plot.getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision().getName())
+                    "subdivision", plot.getChunkData(ChunkKey.fromChunk(p.getChunk())).getSubdivision().getSubdivisionId().getName())
                     .toComponent());
             PlotUtils.visualize(plot, p);
         }else{

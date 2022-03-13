@@ -43,6 +43,7 @@ public class TimberModule extends AbstractModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockBreak(BlockBreakEvent event){
         if(event.isCancelled()) return;
+        if(!event.getPlayer().isSneaking()) return;
         if(!MaterialTags.AXES.isTagged(event.getPlayer().getEquipment().getItemInMainHand().getType())) return;
         if(!isTimberEnabled(event.getPlayer())) return;
         int searchLimit = 0;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Entity
 public class PlotData implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "BIGINT")
     private long id;
 
@@ -25,7 +25,7 @@ public class PlotData implements Serializable {
     @Type(type = "uuid-char")
     private UUID owner;
 
-    @OneToMany(mappedBy = "plot", cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @OneToMany(mappedBy = "subdivisionId.plot", cascade = {CascadeType.ALL}, orphanRemoval = true)
     @LazyCollection(LazyCollectionOption.FALSE)
     private List<SubdivisionData> subdivisions;
 
