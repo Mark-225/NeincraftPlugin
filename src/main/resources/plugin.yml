@@ -38,3 +38,5 @@ commands:
     aliases:
       - tpaccept
       - tpahere
+  echo:
+    permission: neincraft.commands.user.echo

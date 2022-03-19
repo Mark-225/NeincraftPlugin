@@ -9,6 +9,7 @@ import de.neincraft.neincraftplugin.modules.storage.repository.StorageRepository
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.CreativeCategory;
 import org.bukkit.inventory.ItemStack;
@@ -20,17 +21,23 @@ public class Storage {
 
     private static final List<CreativeCategory> categoryOrder = List.of(CreativeCategory.BUILDING_BLOCKS, CreativeCategory.FOOD, CreativeCategory.TOOLS, CreativeCategory.COMBAT, CreativeCategory.DECORATIONS, CreativeCategory.REDSTONE, CreativeCategory.BREWING, CreativeCategory.MISC, CreativeCategory.TRANSPORTATION);
 
-    private int getIndex(CreativeCategory category){
+    private int getIndex(Material material){
+        CreativeCategory category;
+        try{
+            category = material.getCreativeCategory();
+        }catch (UnsupportedOperationException e){
+            return categoryOrder.size();
+        }
         return categoryOrder.contains(category) ? categoryOrder.indexOf(category) : categoryOrder.size();
     }
 
     private int compareMaterials(Material m1, Material m2){
-        int categoryResult = getIndex(m1.getCreativeCategory()) - getIndex(m2.getCreativeCategory());
+        int categoryResult = getIndex(m1) - getIndex(m2);
         if(categoryResult != 0) return categoryResult;
         return m1.name().compareToIgnoreCase(m2.name());
     }
 
-    private int compareItems(ItemStack i1, ItemStack i2){
+    private int compareItemsByCategory(ItemStack i1, ItemStack i2){
 
         return compareMaterials(i1.getType(), i2.getType());
     }
@@ -183,8 +190,22 @@ public class Storage {
         }
     }
 
-    public List<ItemStack> getPage(int page){
-        return itemMappings.keySet().stream().sorted(this::compareItems).skip(page * 45L).limit(45).toList();
+    public List<ItemStack> getPage(int page, StorageInterface.SortMode sortMode){
+
+        Comparator<Map.Entry<ItemStack, StorageItem>> comparator = (e1, e2) -> compareItemsByCategory(e1.getKey(), e2.getKey());
+
+        switch (sortMode){
+            case AMOUNT -> comparator = (e1, e2) -> {
+                long amount = e2.getValue().getAmount() - e1.getValue().getAmount();
+                if (amount > Integer.MAX_VALUE) amount = Integer.MAX_VALUE;
+                if(amount < Integer.MIN_VALUE) amount = Integer.MIN_VALUE;
+                if(amount != 0) return (int) amount;
+                return e1.getKey().getType().name().compareTo(e2.getKey().getType().name());
+            };
+            case ALPHABETICAL -> comparator = Comparator.comparing(e -> e.getKey().getType().name());
+        }
+
+        return itemMappings.entrySet().stream().sorted(comparator).map(Map.Entry::getKey).skip(page * 45L).limit(45).toList();
     }
 
 }

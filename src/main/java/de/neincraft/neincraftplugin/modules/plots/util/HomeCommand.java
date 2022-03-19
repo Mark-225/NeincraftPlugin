@@ -65,6 +65,7 @@ public class HomeCommand implements CommandExecutor, SimpleTabCompleter {
                     "label", label,
                     "args", "[plot / owner:plot]"
             ).toComponent());
+            return true;
         }
         Optional<PlotModule> oPlotModule = AbstractModule.getInstance(PlotModule.class);
         if(oPlotModule.isEmpty()){

@@ -21,7 +21,7 @@ public enum BEProperty {
         is.setItemMeta(im);
         return is;
     }),
-    PUBLIC(ts -> ts instanceof Container container && !(container.getInventory().getHolder() instanceof DoubleChest),"user.public", (player) -> {
+    PUBLIC(ts -> ts instanceof Container container,"user.public", (player) -> {
         ItemStack is = new ItemStack(Material.CHEST);
         ItemMeta im = is.getItemMeta();
         im.displayName(Lang.BE_NAME_PUBLIC.getComponent(player));

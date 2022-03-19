@@ -104,9 +104,16 @@ public class PlotModule extends AbstractModule {
                 pr.delete(plot.getPlotData());
                 pr.commit();
                 loadedPlots.remove(plot);
+                removeMarkers(plot);
             }
         }catch(Exception e){
             getLogger().log(Level.WARNING, "Could not delete Plot", e);
+        }
+    }
+
+    private void removeMarkers(Plot plot){
+        if(Bukkit.getPluginManager().isPluginEnabled("BlueMap")) {
+            bluemapIntegration.removePlot(plot);
         }
     }
 

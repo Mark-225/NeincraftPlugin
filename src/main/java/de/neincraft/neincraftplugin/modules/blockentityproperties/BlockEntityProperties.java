@@ -16,6 +16,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockDispenseEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -74,6 +75,16 @@ public class BlockEntityProperties extends AbstractModule implements Listener {
             final ItemStack dispensedItem = event.getItem();
             final Inventory inv = holder.getInventory();
             Bukkit.getScheduler().runTask(NeincraftPlugin.getInstance(), () -> inv.addItem(dispensedItem));
+        }
+    }
+
+    @EventHandler
+    public void onDropperMoveItem(InventoryMoveItemEvent event){
+        if(event.getSource().getHolder(false) instanceof Dropper dropper){
+            if(!getProperty(dropper, BEProperty.INFDISP)) return;
+            ItemStack is = event.getItem();
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(NeincraftPlugin.getInstance(), () -> event.getDestination().addItem(event.getItem()));
         }
     }
 

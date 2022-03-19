@@ -343,7 +343,13 @@ public class PlotProtection implements Listener {
                 if(oPlot.isPresent() && id != null && id == oPlot.get().getPlotData().getId()) return;
             }
             handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, container.getChunk(), event::setCancelled);
-        }else if(event.getInventory().getHolder() instanceof DoubleChest doubleChest && doubleChest.getLeftSide() instanceof Container leftContainer && doubleChest.getRightSide() instanceof Container rightContainer){
+        }else if(event.getInventory().getHolder() instanceof DoubleChest doubleChest && doubleChest.getLeftSide(false) instanceof Container leftContainer && doubleChest.getRightSide(false) instanceof Container rightContainer){
+            NamespacedKey key = new NamespacedKey(NeincraftPlugin.getInstance(), BEProperty.PUBLIC.getKeyIdentifier());
+            if(leftContainer.getPersistentDataContainer().has(key, PersistentDataType.LONG) && rightContainer.getPersistentDataContainer().has(key, PersistentDataType.LONG)){
+                Optional<Plot> oPlot = plotModule.getPlotAtChunk(ChunkKey.fromChunk(leftContainer.getChunk()));
+                Long id = leftContainer.getPersistentDataContainer().get(key, PersistentDataType.LONG);
+                if(oPlot.isPresent() && id != null && id.equals(rightContainer.getPersistentDataContainer().get(key, PersistentDataType.LONG)) && id == oPlot.get().getPlotData().getId()) return;
+            }
             handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, leftContainer.getChunk(), event::setCancelled);
             handleBasicPlayerEvent(player, PlotPermission.OPEN_CONTAINERS, rightContainer.getChunk(), event::setCancelled);
         }else if(event.getInventory().getHolder() instanceof Entity entity && (event.getInventory().getHolder() instanceof StorageMinecart || event.getInventory().getHolder() instanceof HopperMinecart || event.getInventory().getHolder() instanceof ChestedHorse)){
@@ -468,7 +474,16 @@ public class PlotProtection implements Listener {
 
     @EventHandler
     public void onBlockExplode(BlockExplodeEvent event){
-        event.setCancelled(true);
+        if(plotModule.isPublicWorld(event.getBlock().getWorld())){
+            event.setCancelled(true);
+            return;
+        }
+        Optional<Plot> sourcePlot = getFromCache(event.getBlock().getChunk());
+        event.blockList().removeIf(block -> {
+            Optional<Plot> plot = getFromCache(block.getChunk());
+            boolean canPropagate = canPropagate(sourcePlot.orElse(null), plot.orElse(null));
+            return !canPropagate || (plot.isPresent() && !plot.get().resolveSettingsValue(plot.get().getChunkData(ChunkKey.fromChunk(block.getChunk())).getSubdivision(), PlotSetting.ALLOW_EXPLOSIONS));
+        });
     }
 
     @EventHandler
@@ -558,13 +573,14 @@ public class PlotProtection implements Listener {
 
     @EventHandler
     public void onEntityUsePortal(EntityPortalEvent event){
-        if(event.getEntity().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onPlayerUsePortal(PlayerPortalEvent event){
-        if(event.getPlayer().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) return;
+        if(event.getPlayer().getWorld().getEnvironment() == World.Environment.THE_END && event.getFrom().getBlock().getType() != Material.NETHER_PORTAL) {
+            Bukkit.getScheduler().runTask(NeincraftPlugin.getInstance(), () -> Bukkit.dispatchCommand(event.getPlayer(), "spawn"));
+        }
         event.setCancelled(true);
     }
 
@@ -608,8 +624,25 @@ public class PlotProtection implements Listener {
         });
     }
 
+    //Mobgriefing
+    @EventHandler
+    public void onEntityChangeBlock(EntityChangeBlockEvent event){
+        if(event.getEntityType() != EntityType.ENDERMAN && event.getEntityType() != EntityType.ZOMBIE) return;
+        if(plotModule.isPublicWorld(event.getBlock().getWorld()) || plotModule.getPlotAtChunk(ChunkKey.fromChunk(event.getBlock().getChunk())).isPresent())
+            event.setCancelled(true);
+    }
 
-
-
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event){
+        if(event.getKeepInventory()) return;
+        ChunkKey chunk = ChunkKey.fromChunk(event.getPlayer().getChunk());
+        Optional<Plot> plot = plotModule.getPlotAtChunk(chunk);
+        if(plot.isEmpty()) return;
+        Plot p = plot.get();
+        SubdivisionData subdivisionData = p.getChunkData(chunk).getSubdivision();
+        if(subdivisionData == null) return;
+        if(p.resolveSettingsValue(subdivisionData, PlotSetting.KEEP_INVENTORY) || p.resolveSettingsValue(subdivisionData, PlotSetting.ALLOW_PVP))
+            event.setKeepInventory(true);
+    }
 
 }

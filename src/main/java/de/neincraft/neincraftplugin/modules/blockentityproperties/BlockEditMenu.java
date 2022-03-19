@@ -10,6 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.block.Container;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.TileState;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -72,18 +74,29 @@ public class BlockEditMenu implements Listener {
     }
 
     public void setSetting(BEProperty property, boolean value){
-        if(!editedBlock.getChunk().isLoaded()) return;
+        if(editedBlock instanceof Container container && container.getInventory().getHolder() instanceof DoubleChest doubleChest){
+            if(doubleChest.getLeftSide() != null && doubleChest.getRightSide() != null) {
+                setSetting((TileState) doubleChest.getLeftSide(false), property, value);
+                setSetting((TileState) doubleChest.getRightSide(false), property, value);
+            }
+            return;
+        }
+        setSetting(editedBlock, property, value);
+    }
+
+    public void setSetting(TileState block, BEProperty property, boolean value){
+        if(!block.getChunk().isLoaded()) return;
         if(!player.hasPermission("neincraft.blockproperties." + property.getRequiredPermission())) return;
         Optional<PlotModule> oPm = AbstractModule.getInstance(PlotModule.class);
         if(oPm.isEmpty()) return;
-        Optional<Plot> oPlot = oPm.get().getPlotAtChunk(ChunkKey.fromChunk(editedBlock.getChunk()));
+        Optional<Plot> oPlot = oPm.get().getPlotAtChunk(ChunkKey.fromChunk(block.getChunk()));
         if(oPlot.isEmpty()) return;
         if(!player.getUniqueId().equals(oPlot.get().getPlotData().getOwner()) && !player.hasPermission("neincraft.commands.admin.plotadmin")) return;
         NamespacedKey key = new NamespacedKey(NeincraftPlugin.getInstance(), property.getKeyIdentifier());
         if(value){
-            editedBlock.getPersistentDataContainer().set(key, PersistentDataType.LONG, oPlot.get().getPlotData().getId());
+            block.getPersistentDataContainer().set(key, PersistentDataType.LONG, oPlot.get().getPlotData().getId());
         }else{
-            editedBlock.getPersistentDataContainer().remove(key);
+            block.getPersistentDataContainer().remove(key);
         }
     }
 

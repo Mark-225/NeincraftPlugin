@@ -7,6 +7,7 @@ import dev.dbassett.skullcreator.SkullCreator;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -19,6 +20,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +31,19 @@ public class StorageInterface implements Listener {
 
     private static final int PREV_BUTTON = 45;
     private static final int NEXT_BUTTON = 53;
+    private static final int SORT_BUTTON = 51;
     private static final int INFO_BOOK = 49;
+    private static final NamespacedKey PREFERRED_SORT_KEY = new NamespacedKey(NeincraftPlugin.getInstance(), "preferred_storage_sort");
+
+    private ItemStack makeSortButton(){
+        ItemStack is = SkullCreator.itemFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2U0MWM2MDU3MmM1MzNlOTNjYTQyMTIyODkyOWU1NGQ2Yzg1NjUyOTQ1OTI0OWMyNWMzMmJhMzNhMWIxNTE3In19fQ==");
+        is.editMeta(im -> {
+            im.displayName(Lang.SORT_BUTTON.getComponent(viewer));
+            im.lore(List.of(sortMode.getName().getComponent(viewer),
+                    Lang.SORT_CLICK_TO_CHANGE.getComponent(viewer)));
+        });
+        return is;
+    }
 
     private static ItemStack makePrevButton(Player player, boolean enabled){
         ItemStack is = SkullCreator.itemFromBase64(enabled ? "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODU1MGI3Zjc0ZTllZDc2MzNhYTI3NGVhMzBjYzNkMmU4N2FiYjM2ZDRkMWY0Y2E2MDhjZDQ0NTkwY2NlMGIifX19" :
@@ -71,11 +86,20 @@ public class StorageInterface implements Listener {
     private List<ItemStack> currentItems;
     private int currentPage = 0;
     private Player viewer;
+    private SortMode sortMode = SortMode.CREATIVE_TABS;
 
     public StorageInterface(Player viewer, Storage storage){
         inventory = Bukkit.createInventory(null, 9*6, Lang.STORAGE_CAPTION.getComponent(viewer));
         this.storage = storage;
         this.viewer = viewer;
+        PersistentDataContainer pdc = viewer.getPersistentDataContainer();
+        String preferredSortMode = pdc.getOrDefault(PREFERRED_SORT_KEY, PersistentDataType.STRING, SortMode.CREATIVE_TABS.name());
+        try {
+            SortMode pSortMode = SortMode.valueOf(preferredSortMode);
+            this.sortMode = pSortMode;
+        }catch(IllegalArgumentException e){
+            //Enum:valueOf throws an IllegalArgumentException if the given name does not exist... ._.
+        }
     }
 
     public void open(){
@@ -91,7 +115,7 @@ public class StorageInterface implements Listener {
     }
 
     private void updateItems(){
-        List<ItemStack> items = storage.getPage(currentPage);
+        List<ItemStack> items = storage.getPage(currentPage, sortMode);
         this.currentItems = items;
         Component prefix = Lang.STORAGE_ITEM_AMOUNT_PREFIX.getComponent(viewer);
         for(int i = 0; i < 45 && i < items.size(); i++){
@@ -114,6 +138,7 @@ public class StorageInterface implements Listener {
         inventory.setItem(PREV_BUTTON, makePrevButton(viewer, currentPage > 0));
         inventory.setItem(NEXT_BUTTON, makeNextButton(viewer, currentPage < storage.getPages() - 1));
         inventory.setItem(INFO_BOOK, makeInfoBook());
+        inventory.setItem(SORT_BUTTON, makeSortButton());
     }
 
     @EventHandler
@@ -142,7 +167,17 @@ public class StorageInterface implements Listener {
             case NEXT_BUTTON -> {
                 switchPage(1);
             }
+            case SORT_BUTTON -> {
+                cycleSortMode();
+            }
         }
+    }
+
+    private void cycleSortMode(){
+        currentPage = 0;
+        sortMode = SortMode.values()[(sortMode.ordinal() + 1) % SortMode.values().length];
+        viewer.getPersistentDataContainer().set(PREFERRED_SORT_KEY, PersistentDataType.STRING, sortMode.name());
+        updateInventory();
     }
 
     private void handlePlayerInventoryClick(int slot, ClickType click){
@@ -194,6 +229,23 @@ public class StorageInterface implements Listener {
         HandlerList.unregisterAll(this);
         inventory.close();
         storage.closeInterface(this);
+    }
+
+    public static enum SortMode{
+
+        CREATIVE_TABS(Lang.SORT_CREATIVE),
+        AMOUNT(Lang.SORT_AMOUNT),
+        ALPHABETICAL(Lang.SORT_ALPHABET);
+
+        private Lang name;
+
+        SortMode(Lang name){
+            this.name = name;
+        }
+
+        public Lang getName(){
+            return  name;
+        }
     }
 
 

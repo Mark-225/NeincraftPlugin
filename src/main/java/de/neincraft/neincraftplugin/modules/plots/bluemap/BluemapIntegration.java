@@ -66,7 +66,7 @@ public class BluemapIntegration {
                     MarkerSet ms = oMs.get();
                     for(BlueMapMap map : world.getMaps()){
                         String idPrefix = worldUuid.toString() + "-" + map.getId() + "-" + plotId + "-" + "plot";
-                        ms.getMarkers().stream().filter(marker -> marker.getId().startsWith(idPrefix)).forEach(ms::removeMarker);
+                        removeAll(ms, idPrefix);
                         for(int i = 0; i < plotSectors.size(); i++) {
                             List<Vector2d> sectorCoordinates = plotSectors.get(i);
                             String id = idPrefix + "-" + i;
@@ -85,6 +85,38 @@ public class BluemapIntegration {
                 }
             });
         });
+    }
+
+    public void removePlot(Plot plot){
+        World w = Bukkit.getWorld(plot.getPlotData().getWorldName());
+        if(w == null) return;
+        final UUID worldUuid = w.getUID();
+        final long plotId = plot.getPlotData().getId();
+        Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () ->{
+            BlueMapAPI.getInstance().ifPresent(api ->{
+                Optional<BlueMapWorld> bmw = api.getWorld(worldUuid);
+                if(bmw.isEmpty()) return;
+                BlueMapWorld world = bmw.get();
+                if(world.getMaps().isEmpty()) return;
+                try {
+                    MarkerAPI mApi = api.getMarkerAPI();
+                    Optional<MarkerSet> oMs = mApi.getMarkerSet("neincraft_plots");
+                    if (oMs.isEmpty()) return;
+                    MarkerSet ms = oMs.get();
+                    for (BlueMapMap map : world.getMaps()) {
+                        String idPrefix = worldUuid.toString() + "-" + map.getId() + "-" + plotId + "-" + "plot";
+                        removeAll(ms, idPrefix);
+                    }
+                    mApi.save();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    private void removeAll(MarkerSet ms, String prefix){
+        ms.getMarkers().stream().filter(marker -> marker.getId().startsWith(prefix)).forEach(ms::removeMarker);
     }
 
 }

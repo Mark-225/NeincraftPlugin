@@ -96,6 +96,7 @@ public abstract class PlotUtils {
             boolean changed = true;
             Set<Vector2i> searchSources = new HashSet<>();
             Vector2i firstChunk = chunks.iterator().next();
+            int yGroup = firstChunk.getY() / 2;
             sector.add(firstChunk);
             searchSources.add(firstChunk);
             while(changed){
@@ -106,7 +107,7 @@ public abstract class PlotUtils {
                             chunk.add(0, 1),
                             chunk.add(1, 0),
                             chunk.add(-1, 0))
-                            .filter(c -> !sector.contains(c) && chunks.contains(c)).collect(Collectors.toCollection(HashSet::new)));
+                            .filter(c -> c.getY() / 2 == yGroup && !sector.contains(c) && chunks.contains(c)).collect(Collectors.toCollection(HashSet::new)));
                 }
                 if(!addedChunks.isEmpty()){
                     changed = true;
@@ -114,8 +115,7 @@ public abstract class PlotUtils {
                     sector.addAll(addedChunks);
                 }
             }
-            List<Set<Vector2i>> subSectors = sector.stream().collect(Collectors.groupingBy(v -> v.getY() / 2)).values().stream().map(HashSet::new).collect(Collectors.toCollection(ArrayList::new));
-            sectors.addAll(subSectors);
+            sectors.add(sector);
             chunks.removeAll(sector);
         }
         return sectors;

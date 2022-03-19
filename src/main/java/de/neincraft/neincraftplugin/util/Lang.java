@@ -25,6 +25,8 @@ public enum Lang {
     LIST_EMPTY("&red&Keine Einträge gefunden", "&red&No entries found"),
     INVENTORY_FULL("&red&Du hast keinen freien Platz im Inventar!", "&red&Your Inventory is full!"),
     UNKNOWN_COMMAND("&red&Unbekannter Befehl", "&red&Unknown Command"),
+    PLAYER_LIST_HEADER("[Nein](gold)[Craft](aqua)", "[Nein](gold)[Craft](aqua)"),
+    PLAYER_LIST_FOOTER("[TPS: %tps%](gray)    [Spieler: ](white)[%players%](gold)[/](gray)[%slots%](yellow)    [Mem: %used%/%allocated%gb](gray)", "[TPS: %tps%](gray)    [Players: ](white)[%players%](gold)[/](gray)[%slots%](yellow)    [Mem: %used%/%allocated%gb](gray)"),
 
     //stats
     FIRST_JOIN("&green&Willkommen zu deinem ersten Besuch auf Neincraft, [%player%](color=yellow)!", "&green&Welcome to your first visit on Neincraft, [%player%](color=yellow)!"),
@@ -128,8 +130,8 @@ public enum Lang {
             [The following settings are configured for this subdivision:](color=yellow)
             [(Hover over the names for detailed descriptions)](color=gray)\040
             """),
-    PLOT_SETTINGS_ENTRY("[%setting%](color=white show_text=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%defined%](color=yellow)",
-            "[%setting%](color=white hover=%description%) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%defined%](color=yellow)"),
+    PLOT_SETTINGS_ENTRY("[%setting%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Definiert in](color=white) [%defined%](color=yellow)",
+            "[%setting%](color=white) [=](color=gray) [%value%](color=%valueColor%) [|](color=gray) [Defined in](color=white) [%defined%](color=yellow)"),
     PLOT_SETTING_PROTECTED("&red&Nur Admins können diese Einstellung konfigurieren!", "&red&Only administrators can configure this setting!"),
     //groups
     PLOT_GROUP_EXISTS("&red&Eine Gruppe mit diesem Namen existiert bereits!", "&red&A group with this name already exists!"),
@@ -192,16 +194,21 @@ public enum Lang {
     STORAGE_PREV_PAGE("Vorherige Seite", "Previous page"),
     STORAGE_ITEM_AMOUNT_PREFIX("&light_purple&Anzahl in Storage:", "&light_purple&Amount in storage:"),
     STORAGE_LOADING("&yellow&Storage wird initialisiert... Dieser Vorgang könnte einen Moment dauern.", "&yellow&Storage is being initialized... This process could take a moment."),
+    SORT_BUTTON("Sortieren nach: ", "Sort by:"),
+    SORT_CLICK_TO_CHANGE("&light_purple&Zum Wechseln klicken", "&light_purple&Click to change"),
+    SORT_CREATIVE("&gold&Kreativ Kategorien", "&gold&Creative categories"),
+    SORT_AMOUNT("&gold&Gelagerter Anzahl", "&gold&Stored amount"),
+    SORT_ALPHABET("&gold&Alphabet (Minecraft IDs)", "&gold&Alphabet (Minecraft IDs)"),
 
     //teleport
     TP_REQUEST_SENT("&green&Anfrage gesendet!", "&green&Request Sent!"),
     NO_OPEN_REQUESTS("&red&Keine offenen Anfragen vorhanden!", "&red&No open requests available!"),
     TP_REQUEST_COOLDOWN("&red&Bitte warte, bis deine vorherige Anfrage abgelaufen ist!", "&red&Please wait until your previous request expired!"),
     TP_REQUEST_ACCEPTED("&green&Anfrage akzeptiert!", "&green&Request accepted!"),
-    TPA_REQUEST_RECEIVED("&yellow& [%player%](white) möchte sich zu dir teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)",
-            "&yellow& [%player%](white) wants to teleport to you\nAccept using [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)"),
-    TPAHERE_REQUEST_RECEIVED("&yellow& [%player%](white) dich zu sich teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)",
-            "&yellow& [%player%](white) wants yout to teleport to them!\nAccept using [\\[/tpaccept %player%\\]](color= gold run_command=/tpaccept %player%)");
+    TPA_REQUEST_RECEIVED("&yellow& [%player%](white) möchte sich zu dir teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)",
+            "&yellow& [%player%](white) wants to teleport to you\nAccept using [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)"),
+    TPAHERE_REQUEST_RECEIVED("&yellow& [%player%](white) dich zu sich teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)",
+            "&yellow& [%player%](white) wants yout to teleport to them!\nAccept using [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)");
 
 
     private final String german;

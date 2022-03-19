@@ -8,19 +8,24 @@ import de.neincraft.neincraftplugin.modules.playerstats.chat.NeincraftChatRender
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import de.neincraft.neincraftplugin.util.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
+import de.themoep.minedown.adventure.MineDown;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.MessageType;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.server.TabCompleteEvent;
+import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -77,6 +82,7 @@ public class PlayerStats extends AbstractModule implements Listener {
                 }
                 NeincraftUtils.formattedBroadcast(afkMessage, MessageType.SYSTEM, "player", p.getName());
                 afkPlayers.add(p.getUniqueId());
+                p.playerListName(new MineDown("[\\[AFK\\]](yellow) %name%").replace("name", p.getName()).toComponent());
             }
             PlayerData pd = getOrCreate(p.getUniqueId());
             pd.setSecondsPlayed(pd.getSecondsPlayed() + 20);
@@ -101,6 +107,7 @@ public class PlayerStats extends AbstractModule implements Listener {
         if(afkPlayers.contains(player.getUniqueId())){
             afkPlayers.remove(player.getUniqueId());
             NeincraftUtils.formattedBroadcast(Lang.PLAYER_AFK_RETURN, MessageType.SYSTEM, "player", player.getName());
+            player.playerListName(null);
         }
     }
 
@@ -135,10 +142,9 @@ public class PlayerStats extends AbstractModule implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event){
-        if(!event.getPlayer().hasPlayedBefore()) {
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        if (!event.getPlayer().hasPlayedBefore()) {
             NeincraftUtils.formattedBroadcast(Lang.FIRST_JOIN, MessageType.SYSTEM, "player", event.getPlayer().getName());
-            event.getPlayer().teleport(event.getPlayer().getWorld().getSpawnLocation());
         }
         updateLastSeen(event.getPlayer());
     }
@@ -171,6 +177,18 @@ public class PlayerStats extends AbstractModule implements Listener {
     public void  onPlayerBreak(BlockBreakEvent event){
         if(!event.isCancelled() && event.getPlayer().getGameMode() == GameMode.SURVIVAL)
             addPoints(event.getPlayer().getUniqueId(), 1);
+    }
+
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event){
+        if(!(event.getEntity() instanceof Player)) return;
+        Player p = (Player) event.getEntity();
+        if(!afkPlayers.contains(p.getUniqueId())) return;
+        if(event instanceof EntityDamageByEntityEvent entityEvent){
+            if(entityEvent.getDamager() instanceof Player || (entityEvent.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof Player))
+                return;
+        }
+        event.setCancelled(true);
     }
 
     @Override

@@ -101,15 +101,19 @@ public abstract class NeincraftUtils {
     }
 
     public static void teleportToLocation(Player p, Location loc, boolean bringLeashedEntities){
-        List<LivingEntity> toTeleport = Collections.emptyList();
+        final List<LivingEntity> toTeleport = new ArrayList<>();
         if(bringLeashedEntities){
-            toTeleport = p.getWorld().getNearbyEntitiesByType(LivingEntity.class, p.getLocation(), 8).stream().filter(le -> le.isLeashed() && le.getLeashHolder() == p).toList();
+            toTeleport.addAll(p.getWorld().getNearbyEntitiesByType(LivingEntity.class, p.getLocation(), 8).stream().filter(le -> le.isLeashed() && le.getLeashHolder() == p).toList());
         }
         p.getWorld().playSound(p.getLocation(), Sound.ENTITY_BAT_TAKEOFF, 1, 1);
+        toTeleport.forEach(le -> le.setLeashHolder(null));
         if(p.teleport(loc)){
             p.getWorld().playSound(loc, Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
             toTeleport.forEach(le -> le.teleport(loc));
         }
+        Bukkit.getScheduler().runTaskLater(NeincraftPlugin.getInstance(), () ->{
+            toTeleport.forEach(le -> le.setLeashHolder(p));
+        }, 0);
     }
 
     public static Logger getLogger(){
