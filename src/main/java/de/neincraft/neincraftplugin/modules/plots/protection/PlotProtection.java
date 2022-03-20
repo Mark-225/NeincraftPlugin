@@ -293,6 +293,8 @@ public class PlotProtection implements Listener {
             permission = PlotPermission.BUILD;
         }else if(material == Material.BEACON){
             permission = PlotPermission.BUILD;
+        }else if(Tag.CANDLES.isTagged(material)){
+            permission = PlotPermission.BUILD;
         }
 
         if(permission != null)
