@@ -648,4 +648,10 @@ public class PlotProtection implements Listener {
             event.setKeepInventory(true);
     }
 
+    @EventHandler
+    public void onChorusTeleport(PlayerTeleportEvent event){
+        if(event.getCause() == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT)
+            event.setCancelled(true);
+    }
+
 }
