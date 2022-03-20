@@ -93,7 +93,7 @@ public abstract class NeincraftUtils {
     }
 
     public static void formattedBroadcast(Lang lang, MessageType type){
-        formattedBroadcast(lang, type, null);
+        formattedBroadcast(lang, type);
     }
 
     public static void teleportToLocation(Player p, Location loc){

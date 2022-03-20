@@ -51,6 +51,8 @@ public class PlotProtection implements Listener {
 
     public final NamespacedKey public_container = new NamespacedKey(NeincraftPlugin.getInstance(), "public_access");
 
+    private static final List<CreatureSpawnEvent.SpawnReason> blockedMonsterSpawnReasons = List.of(CreatureSpawnEvent.SpawnReason.NATURAL, CreatureSpawnEvent.SpawnReason.VILLAGE_INVASION, CreatureSpawnEvent.SpawnReason.PATROL, CreatureSpawnEvent.SpawnReason.REINFORCEMENTS);
+
     private Map<ChunkKey, Optional<Plot>> plotCache = new HashMap<>();
     private PlotModule plotModule;
     private List<UUID> playersAtIllegalLocation = new ArrayList<>();
@@ -323,6 +325,7 @@ public class PlotProtection implements Listener {
     @EventHandler
     public void onEntityDamaged(EntityDamageByEntityEvent event){
         Player player = null;
+        if(event.getEntity() instanceof Monster monster && monster.getTarget() instanceof Player) return;
         if(event.getDamager() instanceof Player p)
             player = p;
         else if(event.getDamager() instanceof Projectile pr && pr.getShooter() instanceof Player p)
@@ -512,7 +515,7 @@ public class PlotProtection implements Listener {
 
     @EventHandler
     public void onMobSpawn(CreatureSpawnEvent event){
-        if(event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.NATURAL) return;
+        if(!blockedMonsterSpawnReasons.contains(event.getSpawnReason())) return;
         PlotSetting setting = null;
         if(event.getEntity() instanceof Monster){
             setting = PlotSetting.SPAWN_MONSTERS;
