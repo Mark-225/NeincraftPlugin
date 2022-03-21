@@ -649,6 +649,8 @@ public class PlotProtection implements Listener {
         if(p.resolveSettingsValue(subdivisionData, PlotSetting.KEEP_INVENTORY) || p.resolveSettingsValue(subdivisionData, PlotSetting.ALLOW_PVP)) {
             event.getDrops().clear();
             event.setKeepInventory(true);
+            event.setShouldDropExperience(false);
+            event.setKeepLevel(true);
         }
     }
 
