@@ -646,8 +646,10 @@ public class PlotProtection implements Listener {
         Plot p = plot.get();
         SubdivisionData subdivisionData = p.getChunkData(chunk).getSubdivision();
         if(subdivisionData == null) return;
-        if(p.resolveSettingsValue(subdivisionData, PlotSetting.KEEP_INVENTORY) || p.resolveSettingsValue(subdivisionData, PlotSetting.ALLOW_PVP))
+        if(p.resolveSettingsValue(subdivisionData, PlotSetting.KEEP_INVENTORY) || p.resolveSettingsValue(subdivisionData, PlotSetting.ALLOW_PVP)) {
+            event.getDrops().clear();
             event.setKeepInventory(true);
+        }
     }
 
     @EventHandler
