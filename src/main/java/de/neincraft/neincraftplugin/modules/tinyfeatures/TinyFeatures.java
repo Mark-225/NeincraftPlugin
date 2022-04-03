@@ -38,6 +38,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @NeincraftModule(id = "TinyFeatures")
@@ -98,6 +99,7 @@ public class TinyFeatures extends AbstractModule implements Listener {
     public void onSignInteract(PlayerInteractEvent event){
         if(event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) return;
         if(event.getHand() != EquipmentSlot.HAND || !event.getPlayer().isSneaking()) return;
+        if(event.getItem() != null) return;
         if(!Tag.SIGNS.isTagged(event.getClickedBlock().getType())) return;
         if(!event.getPlayer().hasPermission("neincraft.editsigns")) return;
         if(event.getClickedBlock().getState(false) instanceof Sign sign){
@@ -143,10 +145,9 @@ public class TinyFeatures extends AbstractModule implements Listener {
     //soulbound
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event){
-        event.getDrops().stream().filter(is -> is.getItemMeta().getPersistentDataContainer().has(SOULBOUND_KEY)).forEach(is ->{
-            event.getDrops().remove(is);
-            event.getItemsToKeep().add(is);
-        });
+        List<ItemStack> soulboundDrops = event.getDrops().stream().filter(Objects::nonNull).filter(ItemStack::hasItemMeta).filter(is -> is.getItemMeta().getPersistentDataContainer().has(SOULBOUND_KEY)).toList();
+        event.getDrops().removeAll(soulboundDrops);
+        event.getItemsToKeep().addAll(soulboundDrops);
     }
 
     @EventHandler
