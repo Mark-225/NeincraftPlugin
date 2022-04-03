@@ -27,7 +27,7 @@ public class ModuleLoader {
             }
             AbstractModule moduleInstance;
             try {
-                moduleInstance = current.getDeclaredConstructor(null).newInstance();
+                moduleInstance = current.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 NeincraftPlugin.getInstance().getLogger().log(Level.WARNING, String.format("Could not instantiate class \"%s\" for Module \"%s\". See stacktrace for more details.", current.getName(), moduleData.id()));
                 e.printStackTrace();

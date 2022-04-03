@@ -208,7 +208,15 @@ public enum Lang {
     TPA_REQUEST_RECEIVED("&yellow& [%player%](white) möchte sich zu dir teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)",
             "&yellow& [%player%](white) wants to teleport to you\nAccept using [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)"),
     TPAHERE_REQUEST_RECEIVED("&yellow& [%player%](white) dich zu sich teleportieren!\nAnnehmen mit [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)",
-            "&yellow& [%player%](white) wants yout to teleport to them!\nAccept using [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)");
+            "&yellow& [%player%](white) wants yout to teleport to them!\nAccept using [\\[/tpaccept %player%\\]](color=gold run_command=/tpaccept %player%)"),
+
+    //discord
+    DISCORD_LINK_SUCCESS("&green&Discord Account erfolgreich verbunden!", "&green&Discord account successfully linked!"),
+    DISCORD_LINK_FAIL("&red&Discord Account konnte nicht verbunden werden! (Token ungültig)", "&red&Discord account could not be linked! (Invalid token)"),
+    DISCORD_UNLINK_SUCCESS("&green&Discord Accounts erfolgreich getrennt!", "&green&Discord accounts successfully unlinked!"),
+    DISCORD_OPT_OUT_SUCCESS("&green&Deine Nachrichten werden nicht mehr im Discord erscheinen!", "&green&Your messages will no longer appear on Discord!"),
+    DISCORD_OPT_IN_SUCCESS("&green&Deine Nachrichten werden wieder im Discord erscheinen!", "&green&Your messages will appear on Discord again!"),
+    DISCORD_CHAT_PRESET("&#5865F2&[Discord] [%name%](white) » [%message%](white)", "&#5865F2&[Discord] [%name%](white) » [%message%](white)");
 
 
     private final String german;

@@ -40,3 +40,5 @@ commands:
       - tpahere
   echo:
     permission: neincraft.commands.user.echo
+  discord:
+    permission: neincraft.commands.user.discord

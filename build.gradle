@@ -53,7 +53,8 @@ dependencies {
     implementation group: 'org.hibernate', name: 'hibernate-core', version: '5.6.1.Final'
     implementation 'de.themoep:minedown-adventure:1.7.2-SNAPSHOT'
     implementation 'dev.dbassett:skullcreator:3.0.1'
-    implementation 'org.javacord:javacord:3.4.0'
+    implementation 'org.javacord:javacord-api:3.4.0'
+    implementation 'org.javacord:javacord-core:3.4.0'
 }
 
 processResources {
@@ -66,6 +67,7 @@ processResources {
 tasks.jar.dependsOn(shadowJar)
 
 shadowJar {
+    mergeServiceFiles()
     relocate 'com.flowpowered', 'com.flowpowered'
 }
 

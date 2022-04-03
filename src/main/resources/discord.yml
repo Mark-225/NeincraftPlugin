@@ -1,0 +1,8 @@
+botToken: ""
+cacheRoot: ""
+cacheUrlPattern: ""
+server: -1
+verificationChannel: -1
+chatChannel: -1
+ingameChatRole: -1
+chatWebhook: ""

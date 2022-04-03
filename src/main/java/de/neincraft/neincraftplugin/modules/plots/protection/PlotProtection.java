@@ -89,6 +89,7 @@ public class PlotProtection implements Listener {
             pvpBossbarEN = BossBar.bossBar(Lang.PLOT_PVP_ACTIVE.getComponent(PlayerLanguage.ENGLISH, null), BossBar.MAX_PROGRESS, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
             pvpBossbarDE = BossBar.bossBar(Lang.PLOT_PVP_ACTIVE.getComponent(PlayerLanguage.GERMAN, null), BossBar.MAX_PROGRESS, BossBar.Color.RED, BossBar.Overlay.PROGRESS);
         });
+
     }
 
     private void showPvPWarning(Player p){

@@ -61,9 +61,11 @@ public abstract class NeincraftUtils {
         return lang;
     }
 
-    public static void formattedBroadcast(Lang lang, MessageType type, @Nullable String... replacements){
+    public static void formattedBroadcast(Lang lang, MessageType type, boolean replaceAfterFormat, @Nullable String... replacements){
         for (Player p : Bukkit.getOnlinePlayers()){
             MineDown minedown = lang.getMinedown(p);
+            if(replaceAfterFormat)
+                minedown.replaceFirst(false);
             if(replacements != null){
                 minedown.replace(replacements);
             }
@@ -94,6 +96,9 @@ public abstract class NeincraftUtils {
 
     public static void formattedBroadcast(Lang lang, MessageType type){
         formattedBroadcast(lang, type);
+    }
+    public static void formattedBroadcast(Lang lang, MessageType type, @Nullable String... replacements){
+        formattedBroadcast(lang, type, false, replacements);
     }
 
     public static void teleportToLocation(Player p, Location loc){
