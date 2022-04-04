@@ -1,6 +1,7 @@
 package de.neincraft.neincraftplugin.modules.discord;
 
 import de.neincraft.neincraftplugin.modules.AbstractModule;
+import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
 import de.neincraft.neincraftplugin.util.Lang;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -13,12 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DiscordCommand implements CommandExecutor, TabCompleter {
+public class DiscordCommand implements CommandExecutor, SimpleTabCompleter {
 
-    @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        return null;
-    }
+
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
@@ -113,7 +111,19 @@ public class DiscordCommand implements CommandExecutor, TabCompleter {
                         }
                 );
             }
+            default -> {
+                player.sendMessage(Lang.WRONG_SYNTAX.getMinedown(player).replace(
+                        "label", label,
+                        "args", "link <token> | unlink | opt-out | opt-in"
+                ).toComponent());
+            }
         }
         return true;
+    }
+
+    @Override
+    public void tabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args, List<String> completions) {
+        if(args.length == 1)
+            completions.addAll(List.of("link", "unlink", "opt-out", "opt-in"));
     }
 }

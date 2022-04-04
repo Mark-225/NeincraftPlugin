@@ -181,9 +181,16 @@ public class DiscordModule extends AbstractModule implements Listener {
                             .respond();
                 }
                 case "unlink_account" -> {
-                    discordAccountMap.remove(user.getId());
-                    user.removeRole(ingameChatRole);
-                    messageComponentInteraction.createImmediateResponder().setFlags(InteractionCallbackDataFlag.EPHEMERAL).setContent("Wenn du einen Minecraft Account verbunden hattest, wurde er jetzt getrennt!").respond();
+                    try (DiscordRepository repository = DiscordRepository.getRepository()){
+                        if(repository  == null) return;
+                        repository.delete(user.getId());
+                        repository.commit();
+                        discordAccountMap.remove(user.getId());
+                        user.removeRole(ingameChatRole);
+                        messageComponentInteraction.createImmediateResponder().setFlags(InteractionCallbackDataFlag.EPHEMERAL).setContent("Wenn du einen Minecraft Account verbunden hattest, wurde er jetzt getrennt!").respond();
+                    }catch (Exception e) {
+                        getLogger().log(Level.WARNING, "Could not unlink Discord account", e);
+                    }
                 }
             }
         });
@@ -330,6 +337,7 @@ public class DiscordModule extends AbstractModule implements Listener {
         try(DiscordRepository repo = DiscordRepository.getRepository()){
             if(repo != null) {
                 repo.save(discordId, minecraftUUID);
+                repo.commit();
                 discordAccountMap.put(discordId, minecraftUUID);
                 user.addRole(ingameChatRole);
                 return true;
@@ -343,11 +351,11 @@ public class DiscordModule extends AbstractModule implements Listener {
     }
 
     public void unlinkAccount(UUID minecraftUUID){
-        discordAccountMap.values().removeIf(uuid -> uuid.equals(minecraftUUID));
         try(DiscordRepository repo = DiscordRepository.getRepository()){
             if(repo != null) {
                 discordAccountMap.entrySet().stream().filter(entry -> entry.getValue().equals(minecraftUUID)).forEach(entry -> repo.delete(entry.getKey()));
                 repo.commit();
+                discordAccountMap.values().removeIf(uuid -> uuid.equals(minecraftUUID));
             }
         }catch (Exception e){
             getLogger().log(Level.WARNING, "Could not delete discord account from database", e);

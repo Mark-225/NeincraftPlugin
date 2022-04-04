@@ -32,7 +32,7 @@ public class DiscordRepository implements AutoCloseable{
     }
 
     public void delete(Long discordId){
-        session.createQuery("DELETE FROM DiscordAccount da WHERE da.discordId = :id").setParameter("id", discordId).executeUpdate();
+        session.delete(new DiscordAccount(discordId, null));
     }
 
     public Map<Long, UUID> findAll(){
