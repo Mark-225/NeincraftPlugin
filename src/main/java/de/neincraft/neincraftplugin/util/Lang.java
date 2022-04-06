@@ -216,7 +216,11 @@ public enum Lang {
     DISCORD_UNLINK_SUCCESS("&green&Discord Accounts erfolgreich getrennt!", "&green&Discord accounts successfully unlinked!"),
     DISCORD_OPT_OUT_SUCCESS("&green&Deine Nachrichten werden nicht mehr im Discord erscheinen!", "&green&Your messages will no longer appear on Discord!"),
     DISCORD_OPT_IN_SUCCESS("&green&Deine Nachrichten werden wieder im Discord erscheinen!", "&green&Your messages will appear on Discord again!"),
-    DISCORD_CHAT_PRESET("&#5865F2&[Discord] [%name%](white) » [%message%](white)", "&#5865F2&[Discord] [%name%](white) » [%message%](white)");
+    DISCORD_CHAT_PRESET("&#5865F2&[Discord] [%name%](white) » [%message%](white)", "&#5865F2&[Discord] [%name%](white) » [%message%](white)"),
+
+    //unbreakableItems
+    ITEM_BROKE("&red&Repariere dein Item, um es weiter zu benutzen!", "&red&Repair your item to use it again!"),
+    ARMOR_BROKE("&red&Deine Rüstung wurde abgelegt, da sie zerstört wurde!", "&red&Your armor was unequipped because it was broken!");
 
 
     private final String german;
