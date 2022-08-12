@@ -663,4 +663,25 @@ public class PlotProtection implements Listener {
             event.setCancelled(true);
     }
 
+    //Vehicles
+    @EventHandler
+    public void onBoatBreakBlock(EntityChangeBlockEvent event){
+        if(!(event.getEntity() instanceof Boat)) return;
+
+        //if there is no plot, ignore the event
+        Optional<Plot> plot = getFromCache(event.getBlock().getChunk());
+        if(plot.isEmpty()) return;
+
+        //If boat is driven by a player, check plot Permission
+        if(!event.getEntity().getPassengers().isEmpty() && event.getEntity().getPassengers().get(0) instanceof Player player){
+            handleBasicPlayerEvent(player, PlotPermission.BUILD, event.getBlock().getChunk(), event::setCancelled);
+            return;
+        }
+
+        //Otherwise, check if non-player related block changes can propagate from the boat's origin to the target plot
+        if(event.getEntity().getOrigin() == null) return;
+        if(canPropagate(getFromCache(event.getEntity().getOrigin().getChunk()).orElse(null), plot.get()))
+            event.setCancelled(true);
+    }
+
 }
