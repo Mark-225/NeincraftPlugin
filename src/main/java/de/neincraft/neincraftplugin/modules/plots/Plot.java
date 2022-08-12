@@ -381,11 +381,15 @@ public class Plot {
                 maxZ = id.getZ();
         }
         boundingBox = new PlotBoundingBox(minX, maxX, minZ, maxZ);
-        needsMarkerUpdate = true;
+        setNeedsMarkerUpdate(true);
     }
 
     public void resetMarkerUpdateStatus(){
-        needsMarkerUpdate = false;
+        setNeedsMarkerUpdate(false);
+    }
+
+    public void setNeedsMarkerUpdate(boolean needsMarkerUpdate){
+        this.needsMarkerUpdate = needsMarkerUpdate;
     }
 
     public boolean needsMarkerUpdate(){

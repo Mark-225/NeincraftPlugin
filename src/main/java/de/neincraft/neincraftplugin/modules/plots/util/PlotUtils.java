@@ -22,12 +22,43 @@ public abstract class PlotUtils {
 
     private static ConcurrentHashMap<UUID, BukkitTask> visualizationTasks = new ConcurrentHashMap<>();
 
-    public static List<List<Vector2i>> areaToPolygons(Set<Vector2i> chunks){
+    /**
+     * Entrypoint for the polygon conversion algorithm
+     * @param chunks the chunks to convert
+     * @param areaPolygons a list of polygons to fill with area polygons (in chunk coordinates)
+     * @param borderPolygons a list of polygons to fill with border polygons (in chunk coordinates)
+     */
+    public static void areaToPolygons(Set<Vector2i> chunks, List<List<Vector2i>> areaPolygons, List<List<Vector2i>> borderPolygons) {
         List<Set<Vector2i>> sectors = findSectors(chunks);
-        return sectors.stream().map(PlotUtils::traceArea).collect(Collectors.toCollection(ArrayList::new));
+        sectors.forEach(sector -> traceArea(sector, areaPolygons, borderPolygons));
     }
 
-    private static List<Vector2i> traceArea(Set<Vector2i> chunks){
+    /**
+     * Most user-friendly entry point. Converts a set of chunk coordinates to multiple area and border polygons.
+     * @param chunks The set of chunk coordinates to convert.
+     * @param areaPolygons The list to add the area polygons to.
+     * @param borderPolygons The list to add the border polygons to.
+     */
+    public static void areaToBlockPolygon(Set<Vector2i> chunks, List<List<Vector2d>> areaPolygons, List<List<Vector2d>> borderPolygons){
+        List<List<Vector2i>> areaChunkPolygons = new ArrayList<>();
+        List<List<Vector2i>> borderChunkPolygons = new ArrayList<>();
+        borderChunkPolygons.forEach(polygon -> {
+            if(polygon.isEmpty()) return;
+            Vector2i firstVector = polygon.get(0);
+            polygon.add(firstVector);
+        });
+        areaToPolygons(chunks, areaChunkPolygons, borderChunkPolygons);
+        areaPolygons.addAll(areaChunkPolygons.stream().map(polygon -> polygon.stream().map(vector -> vector.mul(16).toDouble()).toList()).toList());
+        borderPolygons.addAll(borderChunkPolygons.stream().map(polygon -> polygon.stream().map(vector -> vector.mul(16).toDouble()).toList()).toList());
+    }
+
+    /**
+     * Creates border polygons and splits the area into two sectors if a hole is found. Then recursively calls itself for each sector.
+     * @param chunks the sector to convert into polygons
+     * @param areaPolygons the list of polygons that will be filled with the area polygons
+     * @param borderPolygons the list of polygons that will be filled with the border polygons
+     */
+    private static void traceArea(Set<Vector2i> chunks, List<List<Vector2i>> areaPolygons, List<List<Vector2i>> borderPolygons){
         Set<Vector2i> westBorders = new HashSet<>();
         Set<Vector2i> southBorders = new HashSet<>();
         Set<Vector2i> northBorders = new HashSet<>();
@@ -55,17 +86,35 @@ public abstract class PlotUtils {
                 Direction.SOUTH, new HashMap<>(southSegments),
                 Direction.WEST, new HashMap<>(westSegments));
 
-        //This will totally 100% definitely for sure never ever happen but just in case
-        if(northSegments.size() < 1) return Collections.emptyList();
+        while(!segments.get(Direction.NORTH).isEmpty()) {
+            Vector2i startVector = findNext(segments.get(Direction.NORTH).keySet());
+            List<Vector2i> coordinates = new ArrayList<>();
+            coordinates.add(startVector);
+            coordinates.addAll(traceOneLoop(segments, startVector));
+            borderPolygons.add(coordinates);
+        }
 
-        Vector2i startVector = findNext(northSegments.keySet());
-        List<Vector2i> coordinates = new ArrayList<>();
-        coordinates.add(startVector);
-        coordinates.addAll(traceOneLoop(segments, startVector));
-
-        return coordinates;
+        if(borderPolygons.size() > 1){
+            int splitY = borderPolygons.get(1).get(0).getY();
+            Set<Vector2i> northChunks = chunks.stream().filter(chunk -> chunk.getY() < splitY).collect(Collectors.toSet());
+            Set<Vector2i> southChunks = chunks.stream().filter(chunk -> chunk.getY() >= splitY).collect(Collectors.toSet());
+            for(Set<Vector2i> northSector : findSectors(northChunks)){
+                traceArea(northSector, areaPolygons, new ArrayList<>());
+            }
+            for(Set<Vector2i> southSector : findSectors(southChunks)){
+                traceArea(southSector, areaPolygons, new ArrayList<>());
+            }
+        }else if(!borderPolygons.isEmpty()){
+            areaPolygons.add(borderPolygons.get(0));
+        }
     }
 
+    /**
+     * Creates a polygon by tracing border vectors until it reaches the starting vector again.
+     * @param segments the border segments (represented by vector pairs) to trace
+     * @param start the starting vector
+     * @return A list of vectors representing the polygon
+     */
     private static List<Vector2i> traceOneLoop(Map<Direction, Map<Vector2i, Vector2i>> segments, Vector2i start){
         List<Vector2i> coordinates = new ArrayList<>();
         Direction currentDirection = Direction.NORTH;
@@ -88,7 +137,11 @@ public abstract class PlotUtils {
         return coordinates;
     }
 
-
+    /**
+     * Splits a set of chunks into sectors using breadth-first search. A sector is a subset of chunks in which each chunk can be reached by every other chunk using only straight lines.
+     * @param chunks The chunks to split into sectors.
+     * @return A list of sectors.
+     */
     private static List<Set<Vector2i>> findSectors(Set<Vector2i> chunks){
         List<Set<Vector2i>> sectors = new ArrayList<>();
         while (!chunks.isEmpty()){
@@ -96,7 +149,6 @@ public abstract class PlotUtils {
             boolean changed = true;
             Set<Vector2i> searchSources = new HashSet<>();
             Vector2i firstChunk = chunks.iterator().next();
-            int yGroup = firstChunk.getY() / 2;
             sector.add(firstChunk);
             searchSources.add(firstChunk);
             while(changed){
@@ -107,7 +159,7 @@ public abstract class PlotUtils {
                             chunk.add(0, 1),
                             chunk.add(1, 0),
                             chunk.add(-1, 0))
-                            .filter(c -> c.getY() / 2 == yGroup && !sector.contains(c) && chunks.contains(c)).collect(Collectors.toCollection(HashSet::new)));
+                            .filter(c -> !sector.contains(c) && chunks.contains(c)).collect(Collectors.toCollection(HashSet::new)));
                 }
                 if(!addedChunks.isEmpty()){
                     changed = true;
@@ -121,6 +173,12 @@ public abstract class PlotUtils {
         return sectors;
     }
 
+    /**
+     * Finds the most north-west vector in a set of vectors.
+     * Ensures some predictability for the order in which the algorithm operates
+     * @param vectors the set of vectors
+     * @return
+     */
     private static Vector2i findNext(Set<Vector2i> vectors){
         Vector2i min = null;
         for(Vector2i cur : vectors){
@@ -131,10 +189,12 @@ public abstract class PlotUtils {
         return min;
     }
 
-    public static List<List<Vector2d>> areaToBlockPolygon(Set<Vector2i> chunks){
-        return areaToPolygons(chunks).stream().map(sector -> sector.stream().map(chunk -> chunk.mul(16).toDouble()).collect(Collectors.toCollection(ArrayList::new))).collect(Collectors.toCollection(ArrayList::new));
-    }
-
+    /**
+     * Creates border vector pairs from a collection of border chunks
+     * @param borders the collection of border chunks
+     * @param forwardOffset the vector that defines the "forward" direction for the given border chunks
+     * @return
+     */
     private static Map<Vector2i, Vector2i> findSegments(Set<Vector2i> borders, Vector2i forwardOffset){
         Map<Vector2i, Vector2i> segments = new HashMap<>();
         while(!borders.isEmpty()){

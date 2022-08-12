@@ -2,121 +2,150 @@ package de.neincraft.neincraftplugin.modules.plots.bluemap;
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
+import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector4i;
+import com.google.common.html.HtmlEscapers;
 import de.bluecolored.bluemap.api.BlueMapAPI;
 import de.bluecolored.bluemap.api.BlueMapMap;
 import de.bluecolored.bluemap.api.BlueMapWorld;
-import de.bluecolored.bluemap.api.marker.MarkerAPI;
-import de.bluecolored.bluemap.api.marker.MarkerSet;
-import de.bluecolored.bluemap.api.marker.Shape;
-import de.bluecolored.bluemap.api.marker.ShapeMarker;
+import de.bluecolored.bluemap.api.markers.LineMarker;
+import de.bluecolored.bluemap.api.markers.Marker;
+import de.bluecolored.bluemap.api.markers.MarkerSet;
+import de.bluecolored.bluemap.api.markers.ShapeMarker;
+import de.bluecolored.bluemap.api.math.Color;
+import de.bluecolored.bluemap.api.math.Line;
+import de.bluecolored.bluemap.api.math.Shape;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
+import de.neincraft.neincraftplugin.modules.AbstractModule;
+import de.neincraft.neincraftplugin.modules.plots.PlotModule;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 
-import java.awt.*;
+
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class BluemapIntegration {
 
+    private static final int ORANGE_BORDER = 0xffff9a00;
+    private static final int BLUE_BORDER = 0xff00a2ff;
+    private static final int ORANGE_AREA = 0x96ff9a00;
+    private static final int BLUE_AREA = 0x9600a2ff;
+
+    private final Map<String, MarkerSet> plotMarkerSets = new ConcurrentHashMap<>();
+    private final Map<Long, List<Marker>> plotMarkers = new ConcurrentHashMap<>();;
+
     public BluemapIntegration(){
         BlueMapAPI.onEnable(api ->{
-            createMarkerSet();
+            initMarkerSets();
+            AbstractModule.getInstance(PlotModule.class).ifPresent(plotModule -> {
+                Bukkit.getScheduler().runTask(NeincraftPlugin.getInstance(), () -> {
+                    for (Plot p : plotModule.getLoadedPlots()) {
+                        p.setNeedsMarkerUpdate(true);
+                    }
+                });
+            });
         });
     }
 
-    private void createMarkerSet(){
+    private void initMarkerSets(){
         BlueMapAPI.getInstance().ifPresent(api ->{
-            try {
-                MarkerAPI mApi = api.getMarkerAPI();
-                MarkerSet ms = mApi.createMarkerSet("neincraft_plots");
-                ms.setLabel("Grundstücke");
-                mApi.save();
-            } catch (IOException e) {
-                e.printStackTrace();
+            plotMarkerSets.clear();
+            plotMarkers.clear();
+            for(World world : Bukkit.getWorlds()){
+                Optional<BlueMapWorld> optionalWorld = api.getWorld(world.getName());
+                if(optionalWorld.isEmpty()) continue;
+                MarkerSet ms = new MarkerSet("Plots");
+                plotMarkerSets.put(world.getName(), ms);
+                optionalWorld.get().getMaps().forEach(map -> map.getMarkerSets().put("nc_plots", ms));
             }
         });
     }
 
     public void updatePlotMarkers(Plot plot){
-        World w = Bukkit.getWorld(plot.getPlotData().getWorldName());
-        if(w == null) return;
-        final UUID worldUuid = w.getUID();
-        final long plotId = plot.getPlotData().getId();
-        final String plotName = plot.getPlotData().getName();
-        final String plotOwner = plot.isServerPlot() ? "Server" : NeincraftUtils.uuidToName(plot.getPlotData().getOwner());
-        final boolean adminPlot = plot.isServerPlot();
-        final Set<Vector2i> chunks = plot.getPlotData().getChunks().stream().map(cd -> new Vector2i(cd.getId().getX(), cd.getId().getZ())).collect(Collectors.toCollection(HashSet::new));
-        Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () ->{
-            BlueMapAPI.getInstance().ifPresent(api ->{
-                Optional<BlueMapWorld> bmw = api.getWorld(worldUuid);
-                if(bmw.isEmpty()) return;
-                BlueMapWorld world = bmw.get();
-                if(world.getMaps().isEmpty()) return;
-                List<List<Vector2d>> plotSectors = PlotUtils.areaToBlockPolygon(chunks);
-                try {
-                    MarkerAPI mApi = api.getMarkerAPI();
-                    Optional<MarkerSet> oMs = mApi.getMarkerSet("neincraft_plots");
-                    if(oMs.isEmpty()) return;
-                    MarkerSet ms = oMs.get();
-                    for(BlueMapMap map : world.getMaps()){
-                        String idPrefix = worldUuid.toString() + "-" + map.getId() + "-" + plotId + "-" + "plot";
-                        removeAll(ms, idPrefix);
-                        for(int i = 0; i < plotSectors.size(); i++) {
-                            List<Vector2d> sectorCoordinates = plotSectors.get(i);
-                            String id = idPrefix + "-" + i;
-                            ShapeMarker sm = ms.createShapeMarker(id, map, new Shape(sectorCoordinates.toArray(new Vector2d[0])), 63f);
-                            sm.setLabel(plotName + " - " + plotOwner);
-                            if(adminPlot){
-                                sm.setColors(new Color(0, 0, 0, 0), new Color(255, 165, 64, 166));
-                            }else {
-                                sm.setColors(new Color(0, 0, 0, 0), new Color(27, 170, 255, 166));
-                            }
-                        }
-                    }
-                    mApi.save();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        });
+        long plotId = plot.getPlotData().getId();
+        String plotName = plot.getPlotData().getName();
+        String world = plot.getPlotData().getWorldName();
+        String plotOwner = NeincraftUtils.uuidToName(plot.getPlotData().getOwner());
+        boolean serverPlot = plot.isServerPlot();
+        Set<Vector2i> chunks = plot.getPlotData().getChunks().stream().map(cd -> new Vector2i(cd.getId().getX(), cd.getId().getZ())).collect(Collectors.toSet());
+        Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () -> createMarkers(plotId, plotName, plotOwner, serverPlot, world, chunks));
+    }
+
+    private void createMarkers(long plotId, String plotName, String owner, boolean serverPlot, String world, Set<Vector2i> chunks){
+        if(!plotMarkerSets.containsKey(world) || chunks.isEmpty()) return;
+        int chunkCount = chunks.size();
+        String htmlLabel = "<html><body><h1>" + plotName + "</h1><p>Owner: " + HtmlEscapers.htmlEscaper().escape(owner) + "</p><p>Chunks: " + chunkCount + "</p></body></html>";
+        List<List<Vector2d>> borders = new ArrayList<>();
+        List<List<Vector2d>> areas = new ArrayList<>();
+        PlotUtils.areaToBlockPolygon(chunks, areas, borders);
+        Color borderColor = new Color(serverPlot ? ORANGE_BORDER : BLUE_BORDER);
+        Color areaColor = new Color(serverPlot ? ORANGE_AREA : BLUE_AREA);
+        Color areaLineColor = new Color(0);
+        List<Marker> addedMarkers = new ArrayList<>(areas.size() + borders.size());
+        for(List<Vector2d> area : areas){
+            ShapeMarker sm  = ShapeMarker.builder()
+                    .label(plotName)
+                    .detail(htmlLabel)
+                    .lineColor(areaLineColor)
+                    .fillColor(areaColor)
+                    .depthTestEnabled(false)
+                    .shape(new Shape(area), 63f)
+                    .centerPosition()
+                    .build();
+            addedMarkers.add(sm);
+        }
+        try {
+            Field typeField = Marker.class.getDeclaredField("type");
+            typeField.setAccessible(true);
+            MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
+            VarHandle modifiers = lookup.findVarHandle(Field.class, "modifiers", int.class);
+            modifiers.set(typeField, typeField.getModifiers() & ~Modifier.FINAL);
+            for(List<Vector2d> border : borders){
+                LineMarker lm  = LineMarker.builder()
+                        .label(plotName)
+                        .detail(htmlLabel)
+                        .lineColor(borderColor)
+                        .depthTestEnabled(false)
+                        .line(new Line(border.stream().map(v2 -> Vector3d.from(v2.getX(), 63d, v2.getY())).toList()))
+                        .centerPosition()
+                        .build();
+                typeField.set(lm, "line");
+                addedMarkers.add(lm);
+            }
+        } catch (NoSuchFieldException e) {
+            NeincraftUtils.getLogger().log(Level.WARNING, "Could not set marker type field", e);
+        } catch (IllegalAccessException e) {
+            NeincraftUtils.getLogger().log(Level.WARNING, "Could not set marker type field", e);
+        }
+
+
+        plotMarkers.put(plotId, addedMarkers);
+        int seq = 0;
+        for(Marker marker : addedMarkers){
+            plotMarkerSets.get(world).getMarkers().put(plotId + "_" + seq, marker);
+            seq++;
+        }
     }
 
     public void removePlot(Plot plot){
-        World w = Bukkit.getWorld(plot.getPlotData().getWorldName());
-        if(w == null) return;
-        final UUID worldUuid = w.getUID();
-        final long plotId = plot.getPlotData().getId();
-        Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () ->{
-            BlueMapAPI.getInstance().ifPresent(api ->{
-                Optional<BlueMapWorld> bmw = api.getWorld(worldUuid);
-                if(bmw.isEmpty()) return;
-                BlueMapWorld world = bmw.get();
-                if(world.getMaps().isEmpty()) return;
-                try {
-                    MarkerAPI mApi = api.getMarkerAPI();
-                    Optional<MarkerSet> oMs = mApi.getMarkerSet("neincraft_plots");
-                    if (oMs.isEmpty()) return;
-                    MarkerSet ms = oMs.get();
-                    for (BlueMapMap map : world.getMaps()) {
-                        String idPrefix = worldUuid.toString() + "-" + map.getId() + "-" + plotId + "-" + "plot";
-                        removeAll(ms, idPrefix);
-                    }
-                    mApi.save();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        });
-    }
+        List<Marker> markers = plotMarkers.remove(plot.getPlotData().getId());
+        if(markers == null) return;
+        MarkerSet ms = plotMarkerSets.get(plot.getPlotData().getWorldName());
+        if(ms == null) return;
 
-    private void removeAll(MarkerSet ms, String prefix){
-        ms.getMarkers().stream().filter(marker -> marker.getId().startsWith(prefix)).forEach(ms::removeMarker);
+        ms.getMarkers().values().removeAll(markers);
     }
 
 }
