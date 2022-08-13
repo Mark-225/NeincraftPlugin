@@ -106,31 +106,17 @@ public class BluemapIntegration {
                     .build();
             addedMarkers.add(sm);
         }
-        try {
-            Field typeField = Marker.class.getDeclaredField("type");
-            typeField.setAccessible(true);
-            MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
-            VarHandle modifiers = lookup.findVarHandle(Field.class, "modifiers", int.class);
-            modifiers.set(typeField, typeField.getModifiers() & ~Modifier.FINAL);
-            for(List<Vector2d> border : borders){
-                LineMarker lm  = LineMarker.builder()
-                        .label(plotName)
-                        .detail(htmlLabel)
-                        .lineColor(borderColor)
-                        .depthTestEnabled(false)
-                        .line(new Line(border.stream().map(v2 -> Vector3d.from(v2.getX(), 63d, v2.getY())).toList()))
-                        .centerPosition()
-                        .build();
-                typeField.set(lm, "line");
-                addedMarkers.add(lm);
-            }
-        } catch (NoSuchFieldException e) {
-            NeincraftUtils.getLogger().log(Level.WARNING, "Could not set marker type field", e);
-        } catch (IllegalAccessException e) {
-            NeincraftUtils.getLogger().log(Level.WARNING, "Could not set marker type field", e);
+        for(List<Vector2d> border : borders){
+            LineMarker lm  = LineMarker.builder()
+                    .label(plotName)
+                    .detail(htmlLabel)
+                    .lineColor(borderColor)
+                    .depthTestEnabled(false)
+                    .line(new Line(border.stream().map(v2 -> Vector3d.from(v2.getX(), 63d, v2.getY())).toList()))
+                    .centerPosition()
+                    .build();
+            addedMarkers.add(lm);
         }
-
-
         plotMarkers.put(plotId, addedMarkers);
         int seq = 0;
         for(Marker marker : addedMarkers){
