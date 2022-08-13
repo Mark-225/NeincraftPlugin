@@ -23,6 +23,7 @@ import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 
 
 import java.io.IOException;
@@ -43,6 +44,9 @@ public class BluemapIntegration {
     private static final int ORANGE_AREA = 0x96ff9a00;
     private static final int BLUE_AREA = 0x9600a2ff;
 
+    private static final int RED_BORDER = 0xffff0000;
+
+    private final Map<String, MarkerSet> borderMarkerSets = new ConcurrentHashMap<>();
     private final Map<String, MarkerSet> plotMarkerSets = new ConcurrentHashMap<>();
     private final Map<Long, List<Marker>> plotMarkers = new ConcurrentHashMap<>();;
 
@@ -54,6 +58,7 @@ public class BluemapIntegration {
                     for (Plot p : plotModule.getLoadedPlots()) {
                         p.setNeedsMarkerUpdate(true);
                     }
+                    createBorderMarkers();
                 });
             });
         });
@@ -63,14 +68,49 @@ public class BluemapIntegration {
         BlueMapAPI.getInstance().ifPresent(api ->{
             plotMarkerSets.clear();
             plotMarkers.clear();
-            for(World world : Bukkit.getWorlds()){
+            borderMarkerSets.clear();
+            for(World world : Bukkit.getWorlds()) {
                 Optional<BlueMapWorld> optionalWorld = api.getWorld(world.getName());
-                if(optionalWorld.isEmpty()) continue;
+                if (optionalWorld.isEmpty()) continue;
                 MarkerSet ms = new MarkerSet("Plots");
+                MarkerSet bms = new MarkerSet("Borders");
+                borderMarkerSets.put(world.getName(), bms);
                 plotMarkerSets.put(world.getName(), ms);
-                optionalWorld.get().getMaps().forEach(map -> map.getMarkerSets().put("nc_plots", ms));
+                optionalWorld.get().getMaps().forEach(map -> {
+                    map.getMarkerSets().put("nc_plots", ms);
+                    map.getMarkerSets().put("nc_borders", bms);
+                });
             }
         });
+    }
+
+    private void createBorderMarkers(){
+        Color fillColor = new Color(0);
+        Color lineColor = new Color(RED_BORDER);
+        for(World w : Bukkit.getWorlds()){
+            MarkerSet ms = borderMarkerSets.get(w.getName());
+            if(ms == null) continue;
+            ms.getMarkers().clear();
+            WorldBorder wb = w.getWorldBorder();
+            Vector2d center = new Vector2d(wb.getCenter().getX(), wb.getCenter().getZ());
+            double radius = wb.getSize() / 2;
+            List<Vector2d> cornerPoints = List.of(
+                    Vector2d.from(center.getX() - radius, center.getY() - radius),
+                    Vector2d.from(center.getX() + radius, center.getY() - radius),
+                    Vector2d.from(center.getX() + radius, center.getY() + radius),
+                    Vector2d.from(center.getX() - radius, center.getY() + radius)
+            );
+            Shape shape = new Shape(cornerPoints);
+            ShapeMarker sm = ShapeMarker.builder()
+                    .label("Weltgrenze")
+                    .fillColor(fillColor)
+                    .lineColor(lineColor)
+                    .shape(shape, 63)
+                    .centerPosition()
+                    .depthTestEnabled(false)
+                    .build();
+            ms.getMarkers().put("border_outline", sm);
+        }
     }
 
     public void updatePlotMarkers(Plot plot){
@@ -80,6 +120,7 @@ public class BluemapIntegration {
         String plotOwner = NeincraftUtils.uuidToName(plot.getPlotData().getOwner());
         boolean serverPlot = plot.isServerPlot();
         Set<Vector2i> chunks = plot.getPlotData().getChunks().stream().map(cd -> new Vector2i(cd.getId().getX(), cd.getId().getZ())).collect(Collectors.toSet());
+        removePlot(plot);
         Bukkit.getScheduler().runTaskAsynchronously(NeincraftPlugin.getInstance(), () -> createMarkers(plotId, plotName, plotOwner, serverPlot, world, chunks));
     }
 

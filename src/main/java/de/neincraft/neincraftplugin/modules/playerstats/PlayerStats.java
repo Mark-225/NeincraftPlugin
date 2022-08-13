@@ -9,8 +9,12 @@ import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import de.neincraft.neincraftplugin.util.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.themoep.minedown.adventure.MineDown;
+import de.themoep.minedown.adventure.MineDownParser;
+import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.MessageType;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
@@ -163,9 +167,18 @@ public class PlayerStats extends AbstractModule implements Listener {
     }
 
     @EventHandler
-    public void onPlayerChat(AsyncChatEvent event){
-        event.renderer(chatRenderer);
+    public void onPlayerChatPreview(AsyncChatDecorateEvent event) {
+        event.result(new MineDown(PlainTextComponentSerializer.plainText().serialize(event.originalMessage())).filter(MineDownParser.Option.ADVANCED_FORMATTING).toComponent());
     }
+
+    @EventHandler
+    public void onPlayerChat(AsyncChatEvent event){
+        event.setCancelled(true);
+        for(Audience viewer : event.viewers()){
+            viewer.sendMessage(chatRenderer.render(event.getPlayer(), event.getPlayer().name(), event.message(), viewer), MessageType.SYSTEM);
+        }
+    }
+
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void  onPlayerBuild(BlockPlaceEvent event){

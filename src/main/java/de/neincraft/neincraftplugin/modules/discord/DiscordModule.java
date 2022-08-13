@@ -304,7 +304,7 @@ public class DiscordModule extends AbstractModule implements Listener {
         String deathMessage = "-";
         Component c;
         if((c = event.deathMessage()) != null){
-            deathMessage = PaperComponents.plainTextSerializer().serialize(c);
+            deathMessage = PlainTextComponentSerializer.plainText().serialize(c);
         }
         webhook.sendMessage(new EmbedBuilder().setColor(Color.BLACK).addField(p.getName() + " ist gestorben", deathMessage)).whenComplete((m, ex) -> {
             if(ex != null)
@@ -317,7 +317,6 @@ public class DiscordModule extends AbstractModule implements Listener {
         final String message = PlainTextComponentSerializer.plainText().serialize(event.message());
         final Player p = event.getPlayer();
         Bukkit.getScheduler().runTask(NeincraftPlugin.getInstance(), () -> {
-                    if (event.isCancelled()) return;
                     if(p.getPersistentDataContainer().has(DISCORD_OPT_OUT, PersistentDataType.BYTE)) return;
                     chatMessageQueue.add(new AbstractMap.SimpleEntry<>(p.getUniqueId(), message));
         });

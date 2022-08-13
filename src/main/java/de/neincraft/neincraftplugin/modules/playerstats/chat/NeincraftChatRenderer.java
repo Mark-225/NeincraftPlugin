@@ -23,7 +23,6 @@ public class NeincraftChatRenderer implements ChatRenderer {
 
     @Override
     public @NotNull Component render(@NotNull Player source, @NotNull Component sourceDisplayName, @NotNull Component message, @NotNull Audience viewer) {
-        String messageRaw = PlainTextComponentSerializer.plainText().serialize(message);
         String name = source.getName();
         MineDown preset;
         PlayerLanguage lang = PlayerLanguage.ENGLISH;
@@ -46,7 +45,6 @@ public class NeincraftChatRenderer implements ChatRenderer {
                 "label", label,
                 "name", name
         );
-        MineDown messageMineDown = new MineDown(messageRaw).filter(MineDownParser.Option.ADVANCED_FORMATTING);
-        return preset.toComponent().append(messageMineDown.toComponent());
+        return preset.toComponent().append(message);
     }
 }
