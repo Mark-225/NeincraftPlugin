@@ -36,6 +36,7 @@ import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.component.ActionRow;
 import org.javacord.api.entity.message.component.Button;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -44,7 +45,6 @@ import org.javacord.api.entity.user.User;
 import org.javacord.api.entity.webhook.IncomingWebhook;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.interaction.MessageComponentInteraction;
-import org.javacord.api.interaction.callback.InteractionCallbackDataFlag;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -72,8 +72,8 @@ public class DiscordModule extends AbstractModule implements Listener {
     private File steveHead;
     private IncomingWebhook webhook;
     private DiscordApi discordApi;
-    private TextChannel chatChannel;
-    private TextChannel verificationChannel;
+    private long chatChannelId;
+    private long verificationChannelId;
     private Role ingameChatRole;
     private String urlPattern;
 
@@ -114,26 +114,28 @@ public class DiscordModule extends AbstractModule implements Listener {
 
         discordApi = new DiscordApiBuilder().setToken(discordConfig.getString("botToken")).login().join();
         webhook = discordApi.getIncomingWebhookByUrl(discordConfig.getString("chatWebhook")).join();
-        chatChannel = discordApi.getTextChannelById(discordConfig.getLong("chatChannel")).orElse(null);
+        chatChannelId = discordConfig.getLong("chatChannel");
         ingameChatRole = discordApi.getRoleById(discordConfig.getLong("ingameChatRole")).orElse(null);
 
         if(discordConfig.contains("verificationChannel")) {
-            verificationChannel = discordApi.getTextChannelById(discordConfig.getLong("verificationChannel")).orElse(null);
-            if(verificationChannel != null)
+            verificationChannelId = discordConfig.getLong("verificationChannel");
+            if(discordApi.getTextChannelById(verificationChannelId).isPresent())
                 setupVerification();
         }
-
-        if(chatChannel != null)
-            chatChannel.addMessageCreateListener(this::onDiscordMessage);
+        discordApi.getTextChannelById(chatChannelId).ifPresent(chatChannel -> chatChannel.addMessageCreateListener(this::onDiscordMessage));
 
 
         Bukkit.getScheduler().runTaskTimer(NeincraftPlugin.getInstance(), this::chatTask, 20, 20);
         Bukkit.getPluginManager().registerEvents(this, NeincraftPlugin.getInstance());
-        Bukkit.getScheduler().runTaskLaterAsynchronously(NeincraftPlugin.getInstance(), this::cleanup, 6000);
+        Bukkit.getScheduler().runTaskLaterAsynchronously(NeincraftPlugin.getInstance(), this::cleanup, 200);
         return true;
     }
 
     public void sendVerificationMessage(){
+        discordApi.getTextChannelById(verificationChannelId).ifPresent(this::sendVerificationMessageChannel);
+    }
+
+    private void sendVerificationMessageChannel(TextChannel verificationChannel){
         new MessageBuilder()
                 .setContent("""
                             Um auf den Ingame Chat zugreifen zu können muss du deinen Account mit einem Minecraft Account verbinden.
@@ -170,11 +172,11 @@ public class DiscordModule extends AbstractModule implements Listener {
             MessageComponentInteraction messageComponentInteraction = event.getMessageComponentInteraction();
             String customId = messageComponentInteraction.getCustomId();
             User user = messageComponentInteraction.getUser();
-            if(messageComponentInteraction.getChannel().isEmpty() || ! messageComponentInteraction.getChannel().get().equals(verificationChannel)) return;
+            if(messageComponentInteraction.getChannel().isEmpty() || messageComponentInteraction.getChannel().get().getId() != verificationChannelId) return;
             switch (customId){
                 case "link_account" -> {
                     String token = verificationTokens.inverse().computeIfAbsent(user.getId(), this::generateNewToken);
-                    messageComponentInteraction.createImmediateResponder().setFlags(InteractionCallbackDataFlag.EPHEMERAL).setContent(String.format("""
+                    messageComponentInteraction.createImmediateResponder().setFlags(MessageFlag.EPHEMERAL).setContent(String.format("""
                             Bitte gebe den folgenden Command auf dem Server ein:
                             `/discord link %s`
                             (Der Code läuft in 10 Minuten ab)""", token))
@@ -187,7 +189,7 @@ public class DiscordModule extends AbstractModule implements Listener {
                         repository.commit();
                         discordAccountMap.remove(user.getId());
                         user.removeRole(ingameChatRole);
-                        messageComponentInteraction.createImmediateResponder().setFlags(InteractionCallbackDataFlag.EPHEMERAL).setContent("Wenn du einen Minecraft Account verbunden hattest, wurde er jetzt getrennt!").respond();
+                        messageComponentInteraction.createImmediateResponder().setFlags(MessageFlag.EPHEMERAL).setContent("Wenn du einen Minecraft Account verbunden hattest, wurde er jetzt getrennt!").respond();
                     }catch (Exception e) {
                         getLogger().log(Level.WARNING, "Could not unlink Discord account", e);
                     }
@@ -209,13 +211,16 @@ public class DiscordModule extends AbstractModule implements Listener {
         return t;
     }
 
-    private void cleanup(){
+    public void cleanup(){
+        discordApi.getTextChannelById(chatChannelId).ifPresent(this::cleanupChannel);
+    }
+
+    private void cleanupChannel(TextChannel chatChannel){
         if(chatChannel == null) return;
         long time = System.currentTimeMillis() / 1000;
-        List<Message> messages = chatChannel.getMessagesAsStream().dropWhile(message -> time - message.getCreationTimestamp().getEpochSecond() <= 86_400).limit(100)
-                .takeWhile(message -> time - message.getCreationTimestamp().getEpochSecond() <= 1_200_000).toList();
-        if(messages.size() > 1 && messages.size() <= 100)
-            chatChannel.bulkDelete(messages).join();
+        List<Message> messages = chatChannel.getMessagesAsStream().dropWhile(message -> time - message.getCreationTimestamp().getEpochSecond() <= 86_400).limit(100).toList();
+        if(messages.size() > 0)
+            chatChannel.deleteMessages(messages).join();
         Bukkit.getScheduler().runTaskLaterAsynchronously(NeincraftPlugin.getInstance(), this::cleanup, 6000);
     }
 
