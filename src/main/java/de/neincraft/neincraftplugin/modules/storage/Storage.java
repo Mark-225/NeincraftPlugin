@@ -28,7 +28,7 @@ public class Storage {
         }catch (UnsupportedOperationException e){
             return categoryOrder.size();
         }
-        return categoryOrder.contains(category) ? categoryOrder.indexOf(category) : categoryOrder.size();
+        return category != null && categoryOrder.contains(category) ? categoryOrder.indexOf(category) : categoryOrder.size();
     }
 
     private int compareMaterials(Material m1, Material m2){
