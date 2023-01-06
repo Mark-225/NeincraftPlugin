@@ -14,7 +14,7 @@ import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
 import de.neincraft.neincraftplugin.util.BlockBatchChangedEvent;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import io.papermc.paper.event.block.BlockPreDispenseEvent;
 import io.papermc.paper.event.block.PlayerShearBlockEvent;

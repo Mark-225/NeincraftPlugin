@@ -2,7 +2,7 @@ package de.neincraft.neincraftplugin.modules.timber;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

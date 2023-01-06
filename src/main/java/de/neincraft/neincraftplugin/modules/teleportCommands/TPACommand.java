@@ -2,8 +2,7 @@ package de.neincraft.neincraftplugin.modules.teleportCommands;
 
 import de.neincraft.neincraftplugin.modules.teleportCommands.requests.TPAHereRequest;
 import de.neincraft.neincraftplugin.modules.teleportCommands.requests.TPARequest;
-import de.neincraft.neincraftplugin.modules.teleportCommands.requests.TPRequest;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;

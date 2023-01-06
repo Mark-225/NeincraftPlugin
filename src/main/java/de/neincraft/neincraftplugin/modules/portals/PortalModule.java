@@ -10,7 +10,7 @@ import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
 import de.neincraft.neincraftplugin.modules.portals.dto.Portal;
 import de.neincraft.neincraftplugin.modules.portals.dto.embeddable.PortalCoordinates;
 import de.neincraft.neincraftplugin.modules.portals.repository.PortalRepository;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;

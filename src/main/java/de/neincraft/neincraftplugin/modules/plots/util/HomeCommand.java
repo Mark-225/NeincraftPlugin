@@ -4,7 +4,7 @@ import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
 import de.neincraft.neincraftplugin.modules.plots.PlotModule;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;

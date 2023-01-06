@@ -1,15 +1,18 @@
-package de.neincraft.neincraftplugin.util;
+package de.neincraft.neincraftplugin.util.lang;
 
 import com.destroystokyo.paper.ClientOption;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.themoep.minedown.adventure.MineDown;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.hibernate.cfg.Settings;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
 
 public enum Lang {
+
     //General
     PLAYER_NOT_FOUND("&red&Spieler %player% nicht gefunden!", "&red&Player %player% not found!"),
     WRONG_EXECUTOR("&red&Du kannst diesen Command nicht ausführen!", "&red&You can't execute this command!"),
@@ -120,6 +123,25 @@ public enum Lang {
 
     //Settings
     PLOT_SETTINGS_DEFAULT_DESC("Diese Einstellung hat keine Beschreibung", "This setting does not have a description"),
+    PLOT_SETTINGS_SPAWN_MONSTERS_NAME("Monster spawnen", "Spawn monsters"),
+    PLOT_SETTINGS_SPAWN_MONSTERS_DESC("Erlaubt das Spawnen von Monstern auf dem Grundstück", "Allows monsters to spawn on this plot"),
+    PLOT_SETTINGS_SPAWN_ANIMALS_NAME("Tiere spawnen", "Spawn animals"),
+    PLOT_SETTINGS_SPAWN_ANIMALS_DESC("Erlaubt das Spawnen von Tieren auf dem Grundstück", "Allows animals to spawn on this plot"),
+    PLOT_SETTINGS_FIRE_SPREAD_NAME("Feuer", "Fire"),
+    PLOT_SETTINGS_FIRE_SPREAD_DESC("Erlaubt das Ausbreiten von Feuer auf dem Grundstück", "Allows fire to spread on this plot"),
+    PLOT_SETTINGS_ALLOW_EXPLOSIONS_NAME("Explosionen", "Explosions"),
+    PLOT_SETTINGS_ALLOW_EXPLOSIONS_DESC("Erlaubt Explosionen auf dem Grundstück", "Allows explosions on this plot"),
+    PLOT_SETTINGS_ALLOW_PVP_NAME("PvP", "PvP"),
+    PLOT_SETTINGS_ALLOW_PVP_DESC("Erlaubt PvP auf dem Grundstück", "Allows PvP on this plot"),
+    PLOT_SETTINGS_FALL_DAMAGE_NAME("Fallschaden", "Fall damage"),
+    PLOT_SETTINGS_FALL_DAMAGE_DESC("Erlaubt Fallschaden auf dem Grundstück", "Allows fall damage on this plot"),
+    PLOT_SETTINGS_DROWNING_DAMAGE_NAME("Ertrinken", "Drowning"),
+    PLOT_SETTINGS_DROWNING_DAMAGE_DESC("Erlaubt Schaden durch Ertrinken auf dem Grundstück", "Allows damage by drowning on this plot"),
+    PLOT_SETTING_KEEP_INVENTORY_NAME("Inventar behalten", "Keep inventory"),
+    PLOT_SETTING_KEEP_INVENTORY_DESC("Behält das Inventar bei Tod auf dem Grundstück", "Keeps the inventory on death on this plot"),
+    PLOT_SETTING_ALLOW_ENTER_NAME("Betreten", "Enter"),
+    PLOT_SETTING_ALLOW_ENTER_DESC("Erlaubt das Betreten des Grundstücks", "Allows entering the plot"),
+    PLOT_SETTINGS_DEFAULT_NAME("Unbenannt", "Unnamed"),
     PLOT_SETTING_NOT_FOUND("&red&Diese Einstellung existiert nicht!", "&red&This setting does not exist!"),
     PLOT_SETTING_VALUE_INCORRECT("&red&Ungültiger Wert für Einstellung. Nutze \"true\", \"false\" oder \"delete\"", "&red&Invalid value for plot setting. Use \"true\", \"false\" or \"delete\""),
     PLOT_SETTING_UPDATED("&green&Einstellung gespeichert!", "&green&Plot Setting saved!"),
@@ -157,6 +179,60 @@ public enum Lang {
     PLOT_CANT_MODIFY("&red&Das darfst du hier nicht tun!", "&red&You are not allowed to do that here!"),
     PLOT_PVP_ACTIVE("&red&PVP AKTIV", "&red&PVP ACTIVE"),
     PLOT_CANT_TELEPORT("&red&Du darfst dich nicht auf dieses Grundstück teleportieren!", "&red&You are not allowed to teleport to this plot!"),
+
+    //Plot Permissions
+    PLOT_PERMISSION_DEFAULT_NAME("Unbenannt", "Unnamed"),
+    PLOT_PERMISSION_DEFAULT_DESCRIPTION("Beschreibung nicht vorhanden", "Description not available"),
+    PLOT_PERMISSION_BUILD_NAME("Bauen", "Build"),
+    PLOT_PERMISSION_BUILD_DESCRIPTION("Erlaubt das Bauen auf dem Grundstück", "Allows building on the plot"),
+    PLOT_PERMISSION_TELEPORT_HOME_NAME("Teleportieren", "Teleport"),
+    PLOT_PERMISSION_TELEPORT_HOME_DESCRIPTION("Erlaubt das Teleportieren auf das Grundstück (/home command)", "Allows teleporting to the plot (/home command)"),
+    PLOT_PERMISSION_USE_WOOD_BUTTONS_NAME("Holzknöpfe", "Wooden buttons"),
+    PLOT_PERMISSION_USE_WOOD_BUTTONS_DESCRIPTION("Erlaubt das Benutzen von Holzknöpfen", "Allows using wooden buttons"),
+    PLOT_PERMISSION_USE_STONE_BUTTONS_NAME("Steinknöpfe", "Stone buttons"),
+    PLOT_PERMISSION_USE_STONE_BUTTONS_DESCRIPTION("Erlaubt das Benutzen von Steinknöpfen", "Allows using stone buttons"),
+    PLOT_PERMISSION_USE_LEVERS_NAME("Hebel", "Lever"),
+    PLOT_PERMISSION_USE_LEVERS_DESCRIPTION("Erlaubt das Benutzen von Hebeln", "Allows using levers"),
+    PLOT_PERMISSION_OPEN_CONTAINERS_NAME("Container öffnen", "Open containers"),
+    PLOT_PERMISSION_OPEN_CONTAINERS_DESCRIPTION("Erlaubt das Öffnen von Containern (Kisten, Öfen, Dispenser, etc.)", "Allows opening containers (chests, furnaces, dispensers, etc.)"),
+    PLOT_PERMISSION_USE_RIDEABLES_NAME("Fahrzeuge benutzen", "Use rideables"),
+    PLOT_PERMISSION_USE_RIDEABLES_DESCRIPTION("Erlaubt das Benutzen von Fahrzeugen (Boote, Pferde, etc.)", "Allows using rideables (boats, horses, etc.)"),
+    PLOT_PERMISSION_PLACE_RIDEABLES_NAME("Fahrzeuge platzieren", "Place rideables"),
+    PLOT_PERMISSION_PLACE_RIDEABLES_DESCRIPTION("Erlaubt das Platzieren von Fahrzeugen (Boote, Pferde, etc.)", "Allows placing rideables (boats, horses, etc.)"),
+    PLOT_PERMISSION_THROW_PROJECTILES_NAME("Projektile werfen", "Throw projectiles"),
+    PLOT_PERMISSION_THROW_PROJECTILES_DESCRIPTION("Erlaubt das Werfen von allen Projektilen außer Pfeilen", "Allows throwing all projectiles except arrows"),
+    PLOT_PERMISSION_FIRE_ARROWS_NAME("Pfeile schießen", "Fire arrows"),
+    PLOT_PERMISSION_FIRE_ARROWS_DESCRIPTION("Erlaubt das Schießen von Pfeilen", "Allows firing arrows"),
+    PLOT_PERMISSION_TRADE_VILLAGERS_NAME("Handeln mit Dorfbewohnern", "Trade with villagers"),
+    PLOT_PERMISSION_TRADE_VILLAGERS_DESCRIPTION("Erlaubt das Handeln mit Dorfbewohnern", "Allows trading with villagers"),
+    PLOT_PERMISSION_SHEAR_ENTITIES_NAME("Mobs scheren", "Shear entities"),
+    PLOT_PERMISSION_SHEAR_ENTITIES_DESCRIPTION("Erlaubt das Scheren von Mobs", "Allows shearing entities"),
+    PLOT_PERMISSION_SADDLE_ENTITIES_NAME("Mobs satteln", "Saddle entities"),
+    PLOT_PERMISSION_SADDLE_ENTITIES_DESCRIPTION("Erlaubt es, Sattel an Mobs anzubringen", "Allows puttting a saddle on entities"),
+    PLOT_PERMISSION_HURT_NON_MONSTERS_NAME("Friedliche Mobs verletzen", "Hurt friendly mobs"),
+    PLOT_PERMISSION_HURT_NON_MONSTERS_DESCRIPTION("Erlaubt das Verletzen von friedlichen mobs (z.B. Tiere)", "Allows hurting friendly mobs (e.g. animals)"),
+    PLOT_PERMISSION_USE_WOODEN_DOORS_NAME("Holztüren benutzen", "Use wooden doors"),
+    PLOT_PERMISSION_USE_WOODEN_DOORS_DESCRIPTION("Erlaubt das Öffnen von Holztüren", "Allows opening wooden doors"),
+    PLOT_PERMISSION_USE_OTHER_OPENABLES_NAME("Andere Blöcke öffnen", "Open other blocks"),
+    PLOT_PERMISSION_USE_OTHER_OPENABLES_DESCRIPTION("Erlaubt das Öffnen von anderen Blöcken (Falltüren, Zauntore, etc.)", "Allows opening other blocks (trap doors, fence gates, etc.)"),
+    PLOT_PERMISSION_USE_ANVILS_NAME("Amboss benutzen", "Use anvils"),
+    PLOT_PERMISSION_USE_ANVILS_DESCRIPTION("Erlaubt das Benutzen von Ambossen", "Allows using anvils"),
+    PLOT_PERMISSION_USE_ENDERCHESTS_NAME("Endertruhen benutzen", "Use enderchests"),
+    PLOT_PERMISSION_USE_ENDERCHESTS_DESCRIPTION("Erlaubt das Benutzen von Endertruhen", "Allows using enderchests"),
+    PLOT_PERMISSION_USE_CRAFTING_TABLE_NAME("Crafting tables benutzen", "Use crafting tables"),
+    PLOT_PERMISSION_USE_CRAFTING_TABLE_DESCRIPTION("Erlaubt das Benutzen von Crafting Tables", "Allows using crafting tables"),
+    PLOT_PERMISSION_USE_REDSTONE_COMPONENTS_NAME("Redstone-Komponenten benutzen", "Use redstone components"),
+    PLOT_PERMISSION_USE_REDSTONE_COMPONENTS_DESCRIPTION("Erlaubt, Redstone-Komponenten zu manipulieren (Repeater Delay etc.)", "Allows manipulating redstone components (repeater delay etc.)"),
+    PLOT_PERMISSION_USE_LEADS_NAME("Leinen benutzen", "Use leads"),
+    PLOT_PERMISSION_USE_LEADS_DESCRIPTION("Erlaubt das Anleinen von Tieren (und Villagern)", "Allows leashing entities (and villagers)"),
+    PLOT_PERMISSION_USE_JUKEBOX_NAME("Jukebox benutzen", "Use jukebox"),
+    PLOT_PERMISSION_USE_JUKEBOX_DESCRIPTION("Erlaubt das Benutzen von Jukeboxen", "Allows using jukeboxes"),
+    PLOT_PERMISSION_READ_LECTERN_NAME("Lectern lesen", "Read lectern"),
+    PLOT_PERMISSION_READ_LECTERN_DESCRIPTION("Erlaubt das Lesen von Büchern auf Lecterns", "Allows reading books on lecterns"),
+    PLOT_PERMISSION_EDIT_LECTERN_NAME("Lectern bearbeiten", "Edit lectern"),
+    PLOT_PERMISSION_EDIT_LECTERN_DESCRIPTION("Erlaubt das Ändern von Büchern auf Lecterns", "Allows changing books on lecterns"),
+    PLOT_PERMISSION_HARVEST_HIVES_NAME("Bienenstöcke ernten", "Harvest hives"),
+    PLOT_PERMISSION_HARVEST_HIVES_DESCRIPTION("Erlaubt das Ernten von Bienenstöcken", "Allows harvesting hives"),
 
     //portals
     PORTAL_ALREADY_EXISTS("&reed&Ein Portal mit diesem Namen existiert bereits!", "&red&A portal with this name already exists"),
@@ -265,5 +341,4 @@ public enum Lang {
     public Component getComponent(@Nullable Player player){
         return getComponent(NeincraftUtils.getPlayerLanguage(player), player);
     }
-
 }

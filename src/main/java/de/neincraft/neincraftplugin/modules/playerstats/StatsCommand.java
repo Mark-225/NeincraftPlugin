@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.playerstats;
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import de.neincraft.neincraftplugin.modules.plots.PlotModule;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;

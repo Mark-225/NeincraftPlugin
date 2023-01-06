@@ -2,7 +2,7 @@ package de.neincraft.neincraftplugin.modules.misc.commands;
 
 import de.neincraft.neincraftplugin.modules.commands.SimpleTabCompleter;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

@@ -1,7 +1,7 @@
 package de.neincraft.neincraftplugin.modules.storage;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.themoep.minedown.adventure.MineDown;
 import dev.dbassett.skullcreator.SkullCreator;
 import net.kyori.adventure.text.Component;
@@ -9,7 +9,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;

@@ -3,13 +3,11 @@ package de.neincraft.neincraftplugin.modules.playerstats.chat;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerStats;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.themoep.minedown.adventure.MineDown;
-import de.themoep.minedown.adventure.MineDownParser;
 import io.papermc.paper.chat.ChatRenderer;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 

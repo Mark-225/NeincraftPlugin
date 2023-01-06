@@ -1,6 +1,6 @@
 package de.neincraft.neincraftplugin.modules.blockentityproperties;
 
-import de.neincraft.neincraftplugin.util.Lang;
+import de.neincraft.neincraftplugin.util.lang.Lang;
 import org.bukkit.Material;
 import org.bukkit.block.*;
 import org.bukkit.entity.Player;
