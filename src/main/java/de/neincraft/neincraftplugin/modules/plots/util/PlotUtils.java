@@ -25,40 +25,39 @@ public abstract class PlotUtils {
     /**
      * Entrypoint for the polygon conversion algorithm
      * @param chunks the chunks to convert
-     * @param areaPolygons a list of polygons to fill with area polygons (in chunk coordinates)
-     * @param borderPolygons a list of polygons to fill with border polygons (in chunk coordinates)
      */
-    public static void areaToPolygons(Set<Vector2i> chunks, List<List<Vector2i>> areaPolygons, List<List<Vector2i>> borderPolygons) {
+    public static List<List<List<Vector2i>>> areaToPolygons(Set<Vector2i> chunks) {
+        List<List<List<Vector2i>>> polygons = new ArrayList<>();
         List<Set<Vector2i>> sectors = findSectors(chunks);
-        sectors.forEach(sector -> traceArea(sector, areaPolygons, borderPolygons));
+        for(Set<Vector2i> sector : sectors) {
+            List<List<Vector2i>> sectorPolygons = new ArrayList<>();
+            traceArea(sector, sectorPolygons);
+            polygons.add(sectorPolygons);
+        }
+        return polygons;
     }
 
     /**
      * Most user-friendly entry point. Converts a set of chunk coordinates to multiple area and border polygons.
      * @param chunks The set of chunk coordinates to convert.
-     * @param areaPolygons The list to add the area polygons to.
-     * @param borderPolygons The list to add the border polygons to.
      */
-    public static void areaToBlockPolygon(Set<Vector2i> chunks, List<List<Vector2d>> areaPolygons, List<List<Vector2d>> borderPolygons){
-        List<List<Vector2i>> areaChunkPolygons = new ArrayList<>();
-        List<List<Vector2i>> borderChunkPolygons = new ArrayList<>();
-        borderChunkPolygons.forEach(polygon -> {
-            if(polygon.isEmpty()) return;
-            Vector2i firstVector = polygon.get(0);
-            polygon.add(firstVector);
-        });
-        areaToPolygons(chunks, areaChunkPolygons, borderChunkPolygons);
-        areaPolygons.addAll(areaChunkPolygons.stream().map(polygon -> polygon.stream().map(vector -> vector.mul(16).toDouble()).toList()).toList());
-        borderPolygons.addAll(borderChunkPolygons.stream().map(polygon -> polygon.stream().map(vector -> vector.mul(16).toDouble()).toList()).toList());
+    public static List<List<List<Vector2d>>> areaToBlockPolygon(Set<Vector2i> chunks){
+        List<List<List<Vector2i>>> chunkPolygons = areaToPolygons(chunks);
+        return chunkPolygons.stream()
+                .map(polygons -> polygons.stream()
+                        .map(polygon -> polygon.stream()
+                                .map(vector -> vector.mul(16).toDouble())
+                                .toList())
+                        .toList())
+                .toList();
     }
 
     /**
      * Creates border polygons and splits the area into two sectors if a hole is found. Then recursively calls itself for each sector.
      * @param chunks the sector to convert into polygons
-     * @param areaPolygons the list of polygons that will be filled with the area polygons
-     * @param borderPolygons the list of polygons that will be filled with the border polygons
+     * @param polygons the list to add the polygons to
      */
-    private static void traceArea(Set<Vector2i> chunks, List<List<Vector2i>> areaPolygons, List<List<Vector2i>> borderPolygons){
+    private static void traceArea(Set<Vector2i> chunks, List<List<Vector2i>> polygons){
         Set<Vector2i> westBorders = new HashSet<>();
         Set<Vector2i> southBorders = new HashSet<>();
         Set<Vector2i> northBorders = new HashSet<>();
@@ -91,21 +90,7 @@ public abstract class PlotUtils {
             List<Vector2i> coordinates = new ArrayList<>();
             coordinates.add(startVector);
             coordinates.addAll(traceOneLoop(segments, startVector));
-            borderPolygons.add(coordinates);
-        }
-
-        if(borderPolygons.size() > 1){
-            int splitY = borderPolygons.get(1).get(0).getY();
-            Set<Vector2i> northChunks = chunks.stream().filter(chunk -> chunk.getY() < splitY).collect(Collectors.toSet());
-            Set<Vector2i> southChunks = chunks.stream().filter(chunk -> chunk.getY() >= splitY).collect(Collectors.toSet());
-            for(Set<Vector2i> northSector : findSectors(northChunks)){
-                traceArea(northSector, areaPolygons, new ArrayList<>());
-            }
-            for(Set<Vector2i> southSector : findSectors(southChunks)){
-                traceArea(southSector, areaPolygons, new ArrayList<>());
-            }
-        }else if(!borderPolygons.isEmpty()){
-            areaPolygons.add(borderPolygons.get(0));
+            polygons.add(coordinates);
         }
     }
 

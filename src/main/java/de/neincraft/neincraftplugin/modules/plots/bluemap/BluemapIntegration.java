@@ -128,15 +128,13 @@ public class BluemapIntegration {
         if(!plotMarkerSets.containsKey(world) || chunks.isEmpty()) return;
         int chunkCount = chunks.size();
         String htmlLabel = "<html><body><h1>" + plotName + "</h1><p>Owner: " + HtmlEscapers.htmlEscaper().escape(owner) + "</p><p>Chunks: " + chunkCount + "</p></body></html>";
-        List<List<Vector2d>> borders = new ArrayList<>();
-        List<List<Vector2d>> areas = new ArrayList<>();
-        PlotUtils.areaToBlockPolygon(chunks, areas, borders);
+        List<List<List<Vector2d>>> sectors = PlotUtils.areaToBlockPolygon(chunks);
         Color borderColor = new Color(serverPlot ? ORANGE_BORDER : BLUE_BORDER);
         Color areaColor = new Color(serverPlot ? ORANGE_AREA : BLUE_AREA);
         Color areaLineColor = new Color(0);
         List<Marker> addedMarkers = new ArrayList<>(areas.size() + borders.size());
-        for(List<Vector2d> area : areas){
-            ShapeMarker sm  = ShapeMarker.builder()
+        for(List<Vector2d> sector : sectors) {
+            ShapeMarker sm = ShapeMarker.builder()
                     .label(plotName)
                     .detail(htmlLabel)
                     .lineColor(areaLineColor)
@@ -146,17 +144,6 @@ public class BluemapIntegration {
                     .centerPosition()
                     .build();
             addedMarkers.add(sm);
-        }
-        for(List<Vector2d> border : borders){
-            LineMarker lm  = LineMarker.builder()
-                    .label(plotName)
-                    .detail(htmlLabel)
-                    .lineColor(borderColor)
-                    .depthTestEnabled(false)
-                    .line(new Line(border.stream().map(v2 -> Vector3d.from(v2.getX(), 63d, v2.getY())).toList()))
-                    .centerPosition()
-                    .build();
-            addedMarkers.add(lm);
         }
         plotMarkers.put(plotId, addedMarkers);
         int seq = 0;
