@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.plots.dto.embeddable;
 import de.neincraft.neincraftplugin.modules.plots.dto.SubdivisionData;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Embeddable

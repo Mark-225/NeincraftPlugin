@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.plots.dto.embeddable;
 
 import org.bukkit.Location;
 
-import javax.persistence.Embeddable;
+import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 
 @Embeddable

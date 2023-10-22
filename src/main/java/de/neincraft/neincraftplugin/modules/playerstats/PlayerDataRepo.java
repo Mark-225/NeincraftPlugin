@@ -5,7 +5,7 @@ import de.neincraft.neincraftplugin.modules.database.DatabaseModule;
 import de.neincraft.neincraftplugin.modules.playerstats.dto.PlayerData;
 import org.hibernate.Session;
 
-import javax.persistence.FlushModeType;
+import jakarta.persistence.FlushModeType;
 import java.util.Optional;
 import java.util.UUID;
 

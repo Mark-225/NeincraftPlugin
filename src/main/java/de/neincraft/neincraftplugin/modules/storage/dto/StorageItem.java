@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.storage.dto;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import org.bukkit.inventory.ItemStack;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity

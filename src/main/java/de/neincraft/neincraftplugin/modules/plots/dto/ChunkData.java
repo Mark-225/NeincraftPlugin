@@ -4,7 +4,7 @@ import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.engine.spi.CascadeStyle;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Table(name = "chunk_data")

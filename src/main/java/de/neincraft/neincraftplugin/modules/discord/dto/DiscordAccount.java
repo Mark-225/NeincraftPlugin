@@ -1,11 +1,12 @@
 package de.neincraft.neincraftplugin.modules.discord.dto;
 
+import de.neincraft.neincraftplugin.modules.database.util.UUIDDataType;
+import jakarta.persistence.Column;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
@@ -16,7 +17,7 @@ public class DiscordAccount {
     private long discordId;
 
     @Column(columnDefinition = "VARCHAR(40)")
-    @Type(type = "uuid-char")
+    @Type(UUIDDataType.class)
     private UUID minecraftId;
 
     public DiscordAccount() {

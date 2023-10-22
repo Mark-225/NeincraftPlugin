@@ -1,9 +1,10 @@
 package de.neincraft.neincraftplugin.modules.playerstats.dto;
 
+import de.neincraft.neincraftplugin.modules.database.util.UUIDDataType;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @Table(name = "player")
@@ -11,7 +12,7 @@ import java.util.UUID;
 public class PlayerData {
     @Id
     @Column(name = "uuid", nullable = false, columnDefinition = "VARCHAR(40)")
-    @Type(type = "uuid-char")
+    @Type(UUIDDataType.class)
     private UUID uuid;
 
     @Column

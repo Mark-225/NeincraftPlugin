@@ -1,10 +1,11 @@
 package de.neincraft.neincraftplugin.modules.storage.dto;
 
+import de.neincraft.neincraftplugin.modules.database.util.UUIDDataType;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
@@ -19,7 +20,7 @@ public class StorageSystem implements Serializable {
     long storageId;
 
     @Column
-    @Type(type = "uuid-char")
+    @Type(UUIDDataType.class)
     UUID owner;
 
     @Column

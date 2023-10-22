@@ -6,7 +6,7 @@ import de.neincraft.neincraftplugin.modules.plots.repository.PlotRepository;
 import de.neincraft.neincraftplugin.modules.portals.dto.Portal;
 import org.hibernate.Session;
 
-import javax.persistence.FlushModeType;
+import jakarta.persistence.FlushModeType;
 import java.util.List;
 import java.util.Optional;
 

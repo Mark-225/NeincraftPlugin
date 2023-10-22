@@ -1,9 +1,10 @@
 package de.neincraft.neincraftplugin.modules.plots.dto.embeddable;
 
+import de.neincraft.neincraftplugin.modules.database.util.UUIDDataType;
 import de.neincraft.neincraftplugin.modules.plots.dto.PlotMemberGroup;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ public class PlotMemberId implements Serializable {
     @ManyToOne(optional = false)
     private PlotMemberGroup group;
 
-    @Type(type = "uuid-char")
+    @Type(UUIDDataType.class)
     private UUID uuid;
 
     public PlotMemberId() {

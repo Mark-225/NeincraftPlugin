@@ -5,6 +5,7 @@ import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.NeincraftModule;
+import jakarta.persistence.Entity;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,7 +18,6 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.reflections.Reflections;
 
-import javax.persistence.Entity;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;

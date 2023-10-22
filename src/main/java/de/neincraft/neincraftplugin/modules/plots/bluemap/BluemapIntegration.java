@@ -2,39 +2,26 @@ package de.neincraft.neincraftplugin.modules.plots.bluemap;
 
 import com.flowpowered.math.vector.Vector2d;
 import com.flowpowered.math.vector.Vector2i;
-import com.flowpowered.math.vector.Vector3d;
-import com.flowpowered.math.vector.Vector4i;
 import com.google.common.html.HtmlEscapers;
 import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.BlueMapMap;
 import de.bluecolored.bluemap.api.BlueMapWorld;
-import de.bluecolored.bluemap.api.markers.LineMarker;
 import de.bluecolored.bluemap.api.markers.Marker;
 import de.bluecolored.bluemap.api.markers.MarkerSet;
 import de.bluecolored.bluemap.api.markers.ShapeMarker;
 import de.bluecolored.bluemap.api.math.Color;
-import de.bluecolored.bluemap.api.math.Line;
 import de.bluecolored.bluemap.api.math.Shape;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.AbstractModule;
-import de.neincraft.neincraftplugin.modules.plots.PlotModule;
-import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
+import de.neincraft.neincraftplugin.modules.plots.PlotModule;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotUtils;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 
-
-import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class BluemapIntegration {
@@ -128,19 +115,19 @@ public class BluemapIntegration {
         if(!plotMarkerSets.containsKey(world) || chunks.isEmpty()) return;
         int chunkCount = chunks.size();
         String htmlLabel = "<html><body><h1>" + plotName + "</h1><p>Owner: " + HtmlEscapers.htmlEscaper().escape(owner) + "</p><p>Chunks: " + chunkCount + "</p></body></html>";
-        List<List<List<Vector2d>>> sectors = PlotUtils.areaToBlockPolygon(chunks);
+        List<PlotUtils.ShapeDescriptor> sectors = PlotUtils.areaToPolygons(chunks);
         Color borderColor = new Color(serverPlot ? ORANGE_BORDER : BLUE_BORDER);
         Color areaColor = new Color(serverPlot ? ORANGE_AREA : BLUE_AREA);
-        Color areaLineColor = new Color(0);
-        List<Marker> addedMarkers = new ArrayList<>(areas.size() + borders.size());
-        for(List<Vector2d> sector : sectors) {
+        List<Marker> addedMarkers = new ArrayList<>(sectors.size());
+        for(PlotUtils.ShapeDescriptor sector : sectors) {
             ShapeMarker sm = ShapeMarker.builder()
                     .label(plotName)
                     .detail(htmlLabel)
-                    .lineColor(areaLineColor)
+                    .lineColor(borderColor)
                     .fillColor(areaColor)
                     .depthTestEnabled(false)
-                    .shape(new Shape(area), 63f)
+                    .shape(new Shape(sector.main().scale(16)), 63f)
+                    .holes(sector.holes().stream().map(p -> new Shape(p.scale(16))).toArray(Shape[]::new))
                     .centerPosition()
                     .build();
             addedMarkers.add(sm);

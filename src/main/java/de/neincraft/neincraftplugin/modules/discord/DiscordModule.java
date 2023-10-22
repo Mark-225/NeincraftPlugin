@@ -111,7 +111,7 @@ public class DiscordModule extends AbstractModule implements Listener {
         urlPattern = discordConfig.getString("cacheUrlPattern");
         steveHead = new File(playerHeadDirectory, "steve.png");
 
-        discordApi = new DiscordApiBuilder().setToken(discordConfig.getString("botToken")).login().join();
+        discordApi = new DiscordApiBuilder().setToken(discordConfig.getString("botToken")).setAllIntents().login().join();
         webhook = discordApi.getIncomingWebhookByUrl(discordConfig.getString("chatWebhook")).join();
         chatChannelId = discordConfig.getLong("chatChannel");
         ingameChatRole = discordApi.getRoleById(discordConfig.getLong("ingameChatRole")).orElse(null);

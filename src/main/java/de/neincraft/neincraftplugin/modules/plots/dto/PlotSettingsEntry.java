@@ -3,10 +3,10 @@ package de.neincraft.neincraftplugin.modules.plots.dto;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.SettingId;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotSetting;
 
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;

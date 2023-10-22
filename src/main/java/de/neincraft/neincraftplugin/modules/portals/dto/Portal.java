@@ -5,7 +5,7 @@ import com.flowpowered.math.vector.Vector3i;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
 import de.neincraft.neincraftplugin.modules.portals.dto.embeddable.PortalCoordinates;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "portal")

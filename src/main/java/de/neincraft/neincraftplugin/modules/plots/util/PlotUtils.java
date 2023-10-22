@@ -22,42 +22,45 @@ public abstract class PlotUtils {
 
     private static ConcurrentHashMap<UUID, BukkitTask> visualizationTasks = new ConcurrentHashMap<>();
 
+    public record Polygon(List<Vector2i> points){
+        public Polygon {
+            if(points == null)
+                points = new ArrayList<>();
+        }
+        public List<Vector2d> scale(double factor){
+            return points.stream().map(v2i -> v2i.toDouble().mul(factor)).toList();
+        }
+    }
+
+
+    public record ShapeDescriptor(Polygon main, List<Polygon> holes){
+        public ShapeDescriptor {
+            if(main == null)
+                main = new Polygon(null);
+            if(holes == null)
+                holes = new ArrayList<>();
+        }
+    }
+
     /**
      * Entrypoint for the polygon conversion algorithm
      * @param chunks the chunks to convert
      */
-    public static List<List<List<Vector2i>>> areaToPolygons(Set<Vector2i> chunks) {
-        List<List<List<Vector2i>>> polygons = new ArrayList<>();
+    public static List<ShapeDescriptor> areaToPolygons(Set<Vector2i> chunks) {
+        List<ShapeDescriptor> shapes = new ArrayList<>();
         List<Set<Vector2i>> sectors = findSectors(chunks);
         for(Set<Vector2i> sector : sectors) {
-            List<List<Vector2i>> sectorPolygons = new ArrayList<>();
-            traceArea(sector, sectorPolygons);
-            polygons.add(sectorPolygons);
+            shapes.add(traceArea(sector));
         }
-        return polygons;
-    }
-
-    /**
-     * Most user-friendly entry point. Converts a set of chunk coordinates to multiple area and border polygons.
-     * @param chunks The set of chunk coordinates to convert.
-     */
-    public static List<List<List<Vector2d>>> areaToBlockPolygon(Set<Vector2i> chunks){
-        List<List<List<Vector2i>>> chunkPolygons = areaToPolygons(chunks);
-        return chunkPolygons.stream()
-                .map(polygons -> polygons.stream()
-                        .map(polygon -> polygon.stream()
-                                .map(vector -> vector.mul(16).toDouble())
-                                .toList())
-                        .toList())
-                .toList();
+        return shapes;
     }
 
     /**
      * Creates border polygons and splits the area into two sectors if a hole is found. Then recursively calls itself for each sector.
      * @param chunks the sector to convert into polygons
-     * @param polygons the list to add the polygons to
+     * @param shape the list to add the polygons to
      */
-    private static void traceArea(Set<Vector2i> chunks, List<List<Vector2i>> polygons){
+    private static ShapeDescriptor traceArea(Set<Vector2i> chunks){
         Set<Vector2i> westBorders = new HashSet<>();
         Set<Vector2i> southBorders = new HashSet<>();
         Set<Vector2i> northBorders = new HashSet<>();
@@ -84,14 +87,20 @@ public abstract class PlotUtils {
                 Direction.EAST, new HashMap<>(eastSegments),
                 Direction.SOUTH, new HashMap<>(southSegments),
                 Direction.WEST, new HashMap<>(westSegments));
-
+        Polygon main = null;
+        List<Polygon> holes = new ArrayList<>();
         while(!segments.get(Direction.NORTH).isEmpty()) {
             Vector2i startVector = findNext(segments.get(Direction.NORTH).keySet());
             List<Vector2i> coordinates = new ArrayList<>();
             coordinates.add(startVector);
             coordinates.addAll(traceOneLoop(segments, startVector));
-            polygons.add(coordinates);
+            if(main == null) {
+                main = new Polygon(coordinates);
+            }else{
+                holes.add(new Polygon(coordinates));
+            }
         }
+        return new ShapeDescriptor(main, holes);
     }
 
     /**

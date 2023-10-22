@@ -3,7 +3,7 @@ package de.neincraft.neincraftplugin.modules.plots.dto;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.PermissionId;
 import de.neincraft.neincraftplugin.modules.plots.util.PlotPermission;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;

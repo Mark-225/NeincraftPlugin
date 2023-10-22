@@ -2,8 +2,8 @@ package de.neincraft.neincraftplugin.modules.plots.dto.embeddable;
 
 import de.neincraft.neincraftplugin.modules.plots.dto.PlotData;
 
-import javax.persistence.Embeddable;
-import javax.persistence.ManyToOne;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.ManyToOne;
 import java.io.Serializable;
 
 @Embeddable

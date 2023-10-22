@@ -1,11 +1,12 @@
 package de.neincraft.neincraftplugin.modules.plots.dto;
 
+import de.neincraft.neincraftplugin.modules.database.util.UUIDDataType;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.LocationData;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public class PlotData implements Serializable {
     private String name;
 
     @Column(columnDefinition = "VARCHAR(40)")
-    @Type(type = "uuid-char")
+    @Type(UUIDDataType.class)
     private UUID owner;
 
     @OneToMany(mappedBy = "subdivisionId.plot", cascade = {CascadeType.ALL}, orphanRemoval = true)

@@ -36,8 +36,8 @@ public abstract class NeincraftUtils {
     }
 
     public static Optional<UUID> nameToUuid(String name){
-        OfflinePlayer op = Bukkit.getOfflinePlayerIfCached(name);
-        return op != null ? Optional.of(op.getUniqueId()) : Optional.empty();
+        OfflinePlayer op = Bukkit.getOfflinePlayer(name);
+        return op.hasPlayedBefore() ? Optional.of(op.getUniqueId()) : Optional.empty();
     }
 
     public static PlayerLanguage getPlayerLanguage(Player p){

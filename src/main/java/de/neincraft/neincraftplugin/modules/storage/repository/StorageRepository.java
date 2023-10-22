@@ -7,7 +7,7 @@ import de.neincraft.neincraftplugin.modules.portals.repository.PortalRepository;
 import de.neincraft.neincraftplugin.modules.storage.dto.StorageSystem;
 import org.hibernate.Session;
 
-import javax.persistence.FlushModeType;
+import jakarta.persistence.FlushModeType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

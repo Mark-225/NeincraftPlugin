@@ -6,7 +6,6 @@ import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.themoep.minedown.adventure.MineDown;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import org.hibernate.cfg.Settings;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;

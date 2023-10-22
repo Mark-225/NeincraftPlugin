@@ -1,7 +1,7 @@
 package de.neincraft.neincraftplugin.modules.portals.dto.embeddable;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Entity;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Entity;
 
 @Embeddable
 public class PortalCoordinates {
