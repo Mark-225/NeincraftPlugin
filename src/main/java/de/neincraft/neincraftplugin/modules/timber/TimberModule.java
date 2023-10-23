@@ -94,6 +94,16 @@ public class TimberModule extends AbstractModule implements Listener {
                 xzOffset = 4;
                 toBreak = List.of(Material.WARPED_STEM, Material.WARPED_WART_BLOCK);
                 }
+            case CHERRY_LOG -> {
+                searchLimit = 40;
+                xzOffset = 6;
+                toBreak = List.of(Material.CHERRY_LOG);
+            }
+            case MANGROVE_LOG -> {
+                searchLimit = 50;
+                xzOffset = 6;
+                toBreak = List.of(Material.MANGROVE_LOG);
+            }
             default -> {
                 return;
             }
