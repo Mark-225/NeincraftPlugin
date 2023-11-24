@@ -37,9 +37,7 @@ public class BlockEntityProperties extends AbstractModule implements Listener {
     }
 
     public boolean getProperty(TileState block, BEProperty property){
-        Optional<PlotModule> oPm = AbstractModule.getInstance(PlotModule.class);
-        if(oPm.isEmpty()) return false;
-        Optional<Plot> oPlot = oPm.get().getPlotAtChunk(ChunkKey.fromChunk(block.getChunk()));
+        Optional<Plot> oPlot = AbstractModule.getInstance(PlotModule.class).flatMap(pm -> pm.getPlotAtChunk(ChunkKey.fromChunk(block.getChunk())));
         if(oPlot.isEmpty()) return false;
         NamespacedKey key = new NamespacedKey(NeincraftPlugin.getInstance(), property.getKeyIdentifier());
         if(!block.getPersistentDataContainer().has(key)) return false;
@@ -59,9 +57,7 @@ public class BlockEntityProperties extends AbstractModule implements Listener {
         TileState ts = (TileState) bs;
         if(Arrays.stream(BEProperty.values()).noneMatch(beProperty -> beProperty.getTargetPredicate().test(ts))) return;
         event.setCancelled(true);
-        Optional<PlotModule> oPm = AbstractModule.getInstance(PlotModule.class);
-        if(oPm.isEmpty()) return;
-        Optional<Plot> oPlot = oPm.get().getPlotAtChunk(ChunkKey.fromChunk(ts.getChunk()));
+        Optional<Plot> oPlot = AbstractModule.getInstance(PlotModule.class).flatMap(pm -> pm.getPlotAtChunk(ChunkKey.fromChunk(ts.getChunk())));
         if(oPlot.isEmpty()) return;
         if(!player.getUniqueId().equals(oPlot.get().getPlotData().getOwner()) && !player.hasPermission("neincraft.commands.admin.plotadmin")) return;
         BlockEditMenu bem = new BlockEditMenu(player, ts, this);

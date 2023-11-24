@@ -5,6 +5,7 @@ import com.flowpowered.math.vector.Vector2i;
 import com.flowpowered.math.vector.Vector3i;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.plots.Plot;
+import de.neincraft.neincraftplugin.modules.plots.PlotModule;
 import de.neincraft.neincraftplugin.modules.plots.dto.ChunkData;
 import de.neincraft.neincraftplugin.modules.plots.dto.embeddable.ChunkKey;
 import org.bukkit.*;
@@ -275,6 +276,17 @@ public abstract class PlotUtils {
         }
 
         return vectors;
+    }
+
+    public static boolean canPropagate(PlotModule plotModule, ChunkKey from, ChunkKey to){
+        if(from == to) return true;
+        return canPropagate(plotModule.getPlotAtChunk(from).orElse(null), plotModule.getPlotAtChunk(to).orElse(null));
+    }
+
+    public static boolean canPropagate(Plot from, Plot to){
+        if(from == to || to == null) return true;
+        if(from == null) return false;
+        return Objects.equals(from.getPlotData().getOwner(), to.getPlotData().getOwner());
     }
 
     public static enum Direction{
