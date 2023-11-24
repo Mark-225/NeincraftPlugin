@@ -79,7 +79,7 @@ public class TimberModule extends AbstractModule implements Listener {
                 xzOffset = 1;
                 toBreak = List.of(Material.SPRUCE_LOG);
                 }
-            case MUSHROOM_STEM -> {
+            case MUSHROOM_STEM, RED_MUSHROOM_BLOCK, BROWN_MUSHROOM_BLOCK -> {
                 searchLimit = 60;
                 xzOffset = 3;
                 toBreak = List.of(Material.MUSHROOM_STEM, Material.RED_MUSHROOM_BLOCK, Material.BROWN_MUSHROOM_BLOCK);
@@ -99,10 +99,10 @@ public class TimberModule extends AbstractModule implements Listener {
                 xzOffset = 6;
                 toBreak = List.of(Material.CHERRY_LOG);
             }
-            case MANGROVE_LOG -> {
-                searchLimit = 50;
+            case MANGROVE_LOG, MANGROVE_ROOTS, MUDDY_MANGROVE_ROOTS -> {
+                searchLimit = 70;
                 xzOffset = 6;
-                toBreak = List.of(Material.MANGROVE_LOG);
+                toBreak = List.of(Material.MANGROVE_LOG, Material.MANGROVE_ROOTS, Material.MUDDY_MANGROVE_ROOTS);
             }
             default -> {
                 return;
