@@ -122,7 +122,7 @@ public class BlockEditMenu implements Listener {
         ItemStack is = new ItemStack(value ? Material.LIME_DYE : Material.RED_DYE);
         ItemMeta im = is.getItemMeta();
         im.displayName(value ? Lang.BE_ACTIVATE.getComponent(player) : Lang.BE_DEACTIVATE.getComponent(player));
-        if(active) im.addEnchant(Enchantment.DURABILITY, 1, true);
+        if(active) im.addEnchant(Enchantment.UNBREAKING, 1, true);
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         is.setItemMeta(im);
         return is;

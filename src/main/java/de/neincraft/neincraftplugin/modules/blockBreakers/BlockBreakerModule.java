@@ -45,12 +45,20 @@ public class BlockBreakerModule extends AbstractModule implements Listener {
         return true;
     }
 
+    private boolean isTool(Material type){
+        return Tag.ITEMS_PICKAXES.isTagged(type) ||
+                Tag.ITEMS_AXES.isTagged(type) ||
+                Tag.ITEMS_SHOVELS.isTagged(type) ||
+                Tag.ITEMS_HOES.isTagged(type) ||
+                Tag.ITEMS_SWORDS.isTagged(type);
+    }
+
     @EventHandler
     public void onDispenseItem(BlockPreDispenseEvent event){
         Block dispenserBlock = event.getBlock();
         if(Material.DISPENSER != dispenserBlock.getType()) return;
         ItemStack dispensedItem = event.getItemStack();
-        if(!Tag.ITEMS_TOOLS.isTagged(dispensedItem.getType())) return;
+        if(!isTool(dispensedItem.getType())) return;
         event.setCancelled(true);
         Dispenser dispenserData = (Dispenser) dispenserBlock.getBlockData();
         BlockFace face = dispenserData.getFacing();
@@ -67,7 +75,7 @@ public class BlockBreakerModule extends AbstractModule implements Listener {
             return;
         }
         targetBlock.breakNaturally(dispensedItem, true);
-        int unbreakingLevels = dispensedItem.getEnchantmentLevel(Enchantment.DURABILITY);
+        int unbreakingLevels = dispensedItem.getEnchantmentLevel(Enchantment.UNBREAKING);
         boolean decreaseDurability = unbreakingLevels <= 0 || random.nextDouble() < 1d / (double) (unbreakingLevels + 1);
         if(decreaseDurability && dispensedItem.getItemMeta() instanceof Damageable damageable){
             int newDamage = damageable.getDamage() + 1;
