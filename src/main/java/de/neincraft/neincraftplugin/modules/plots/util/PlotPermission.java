@@ -1,7 +1,7 @@
 package de.neincraft.neincraftplugin.modules.plots.util;
 
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.util.lang.Lang;
-import dev.dbassett.skullcreator.SkullCreator;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
@@ -10,7 +10,7 @@ import java.util.Arrays;
 public enum PlotPermission {
 
     BUILD(true, true, false, "build", Material.OAK_WOOD),
-    TELEPORT_HOME(true, true, false, "home", SkullCreator.itemFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzVhMzViNWNhMTUyNjg2ODVjNDY2MDUzNWU1ODgzZDIxYTVlYzU3YzU1ZDM5NzIzNDI2OWFjYjVkYzI5NTRmIn19fQ==")),
+    TELEPORT_HOME(true, true, false, "home", NeincraftUtils.skullFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzVhMzViNWNhMTUyNjg2ODVjNDY2MDUzNWU1ODgzZDIxYTVlYzU3YzU1ZDM5NzIzNDI2OWFjYjVkYzI5NTRmIn19fQ==")),
     USE_WOOD_BUTTONS(true, true, true, "wood_buttons", Material.OAK_BUTTON),
     USE_STONE_BUTTONS(true, true, false, "stone_buttons", Material.STONE_BUTTON),
     USE_LEVERS(true, true, false, "levers", Material.LEVER),
@@ -51,7 +51,7 @@ public enum PlotPermission {
     }
 
     PlotPermission(boolean ownerDefault, boolean memberDefault, boolean publicDefault, String bypassPermission) {
-        this(ownerDefault, memberDefault, publicDefault, bypassPermission, SkullCreator.itemFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTBhNzk4OWI1ZDZlNjIxYTEyMWVlZGFlNmY0NzZkMzUxOTNjOTdjMWE3Y2I4ZWNkNDM2MjJhNDg1ZGMyZTkxMiJ9fX0="));
+        this(ownerDefault, memberDefault, publicDefault, bypassPermission, NeincraftUtils.skullFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTBhNzk4OWI1ZDZlNjIxYTEyMWVlZGFlNmY0NzZkMzUxOTNjOTdjMWE3Y2I4ZWNkNDM2MjJhNDg1ZGMyZTkxMiJ9fX0="));
     }
 
     PlotPermission(boolean ownerDefault, boolean memberDefault, boolean publicDefault, String bypassPermission, ItemStack displayItem) {

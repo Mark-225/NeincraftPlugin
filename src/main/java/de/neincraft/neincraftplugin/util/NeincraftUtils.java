@@ -1,5 +1,7 @@
 package de.neincraft.neincraftplugin.util;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import de.neincraft.neincraftplugin.modules.AbstractModule;
 import de.neincraft.neincraftplugin.modules.playerstats.PlayerLanguage;
@@ -7,12 +9,11 @@ import de.neincraft.neincraftplugin.modules.playerstats.PlayerStats;
 import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.themoep.minedown.adventure.MineDown;
 import net.kyori.adventure.audience.MessageType;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
@@ -112,6 +113,16 @@ public abstract class NeincraftUtils {
         Bukkit.getScheduler().runTaskLater(NeincraftPlugin.getInstance(), () ->{
             toTeleport.forEach(le -> le.setLeashHolder(p));
         }, 0);
+    }
+
+    public static ItemStack skullFromBase64(String base64){
+        ItemStack stack = new ItemStack(Material.PLAYER_HEAD);
+        if(!(stack.getItemMeta() instanceof SkullMeta sm))return null;
+        PlayerProfile profile = Bukkit.createProfile(new UUID((long)base64.substring(base64.length() - 20).hashCode(), (long)base64.substring(base64.length() - 10).hashCode()));
+        profile.setProperty(new ProfileProperty("textures", base64));
+        sm.setPlayerProfile(profile);
+        stack.setItemMeta(sm);
+        return stack;
     }
 
     public static Logger getLogger(){

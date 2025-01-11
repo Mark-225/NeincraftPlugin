@@ -1,9 +1,9 @@
 package de.neincraft.neincraftplugin.modules.storage;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
+import de.neincraft.neincraftplugin.util.NeincraftUtils;
 import de.neincraft.neincraftplugin.util.lang.Lang;
 import de.themoep.minedown.adventure.MineDown;
-import dev.dbassett.skullcreator.SkullCreator;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -35,7 +35,7 @@ public class StorageInterface implements Listener {
     private static final NamespacedKey PREFERRED_SORT_KEY = new NamespacedKey(NeincraftPlugin.getInstance(), "preferred_storage_sort");
 
     private ItemStack makeSortButton(){
-        ItemStack is = SkullCreator.itemFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2U0MWM2MDU3MmM1MzNlOTNjYTQyMTIyODkyOWU1NGQ2Yzg1NjUyOTQ1OTI0OWMyNWMzMmJhMzNhMWIxNTE3In19fQ==");
+        ItemStack is = NeincraftUtils.skullFromBase64("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2U0MWM2MDU3MmM1MzNlOTNjYTQyMTIyODkyOWU1NGQ2Yzg1NjUyOTQ1OTI0OWMyNWMzMmJhMzNhMWIxNTE3In19fQ==");
         is.editMeta(im -> {
             im.displayName(Lang.SORT_BUTTON.getComponent(viewer));
             im.lore(List.of(sortMode.getName().getComponent(viewer),
@@ -45,7 +45,7 @@ public class StorageInterface implements Listener {
     }
 
     private static ItemStack makePrevButton(Player player, boolean enabled){
-        ItemStack is = SkullCreator.itemFromBase64(enabled ? "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODU1MGI3Zjc0ZTllZDc2MzNhYTI3NGVhMzBjYzNkMmU4N2FiYjM2ZDRkMWY0Y2E2MDhjZDQ0NTkwY2NlMGIifX19" :
+        ItemStack is = NeincraftUtils.skullFromBase64(enabled ? "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODU1MGI3Zjc0ZTllZDc2MzNhYTI3NGVhMzBjYzNkMmU4N2FiYjM2ZDRkMWY0Y2E2MDhjZDQ0NTkwY2NlMGIifX19" :
                 "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODY5NzFkZDg4MWRiYWY0ZmQ2YmNhYTkzNjE0NDkzYzYxMmY4Njk2NDFlZDU5ZDFjOTM2M2EzNjY2YTVmYTYifX19");
         is.editMeta(im -> {
             im.displayName(Lang.STORAGE_PREV_PAGE.getComponent(player));
@@ -54,7 +54,7 @@ public class StorageInterface implements Listener {
     }
 
     private static ItemStack makeNextButton(Player player, boolean enabled){
-        ItemStack is = SkullCreator.itemFromBase64(enabled ? "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTYzMzlmZjJlNTM0MmJhMThiZGM0OGE5OWNjYTY1ZDEyM2NlNzgxZDg3ODI3MmY5ZDk2NGVhZDNiOGFkMzcwIn19fQ==" :
+        ItemStack is = NeincraftUtils.skullFromBase64(enabled ? "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTYzMzlmZjJlNTM0MmJhMThiZGM0OGE5OWNjYTY1ZDEyM2NlNzgxZDg3ODI3MmY5ZDk2NGVhZDNiOGFkMzcwIn19fQ==" :
                 "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjMyY2E2NjA1NmI3Mjg2M2U5OGY3ZjMyYmQ3ZDk0YzdhMGQ3OTZhZjY5MWM5YWMzYTkxMzYzMzEzNTIyODhmOSJ9fX0=");
         is.editMeta(im -> {
             im.displayName(Lang.STORAGE_NEXT_PAGE.getComponent(player));
@@ -74,7 +74,7 @@ public class StorageInterface implements Listener {
                            "current", "" + (currentPage + 1),
                            "total", "" + storage.getPages()
                    ).toComponent()));
-           im.addEnchant(Enchantment.DURABILITY, 1, true);
+           im.addEnchant(Enchantment.UNBREAKING, 1, true);
            im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         });
         return is;
