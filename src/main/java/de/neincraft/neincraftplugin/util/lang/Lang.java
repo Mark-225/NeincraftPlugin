@@ -295,7 +295,12 @@ public enum Lang {
 
     //unbreakableItems
     ITEM_BROKE("&red&Repariere dein Item, um es weiter zu benutzen!", "&red&Repair your item to use it again!"),
-    ARMOR_BROKE("&red&Deine Rüstung wurde abgelegt, da sie zerstört wurde!", "&red&Your armor was unequipped because it was broken!");
+    ARMOR_BROKE("&red&Deine Rüstung wurde abgelegt, da sie zerstört wurde!", "&red&Your armor was unequipped because it was broken!"),
+
+    //evac
+    EVAC_UNKNOWN_WORLD("&red&Diese Welt existiert nicht.", "&red&This world doesn't exist."),
+    EVAC_PROCESSING("&yellow&Offline Spieler werden ermittelt und zum Spawn teleportiert...", "&yellow&Offline players are being identified and teleported to spawn..."),
+    EVAC_COMPLETED("&green&Anzahl teleportierter Spieler: %total% (%online% online)", "&green&Number of teleported players: %total% (%online% online)");
 
 
     private final String german;

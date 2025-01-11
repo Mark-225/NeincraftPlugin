@@ -42,3 +42,7 @@ commands:
     permission: neincraft.commands.user.echo
   discord:
     permission: neincraft.commands.user.discord
+  evacuate:
+    permission: neincraft.commands.admin.evac
+    aliases:
+      - evac
