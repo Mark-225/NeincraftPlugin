@@ -1,27 +1,45 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
-plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+
+buildscript {
+    ext {
+        asmAsmVersion = "9.6" // https://gitlab.ow2.org/asm/asm/-/tags
+    }
+    configurations {
+        classpath {
+            resolutionStrategy {
+                //in order to handle jackson's higher release version in shadow, this needs to be upgraded to latest.
+                force(group: "org.ow2.asm", name: "asm", version: asmAsmVersion)
+                force(group: "org.ow2.asm", name: "asm-commons", version: asmAsmVersion)
+            }
+        }
+    }
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.1'
+}
+
+apply plugin: 'com.gradleup.shadow'
 apply plugin: 'java'
 apply plugin: 'idea'
 compileJava.options.encoding = 'UTF-8'
 
 group = 'de.neincraft'
 version = 'v0.1-alpha'
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+}
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
-    maven {
-        name = 'papermc-repo'
-        url = 'https://papermc.io/repo/repository/maven-public/'
-    }
+    maven {url 'https://repo.papermc.io/repository/maven-public/'}
     maven {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
@@ -38,21 +56,24 @@ repositories {
     }
 
     maven { url 'https://jitpack.io' }
+    maven {
+        name = 'Bluemap'
+        url = 'https://repo.bluecolored.de/releases'
+    }
     mavenLocal()
 }
 
 dependencies {
     implementation 'org.jetbrains:annotations:23.1.0'
-    compileOnly 'io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT'
-    compileOnly 'com.github.BlueMap-Minecraft:BlueMapAPI:v2.5.1'
+    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'de.bluecolored.bluemap:BlueMapAPI:2.7.2'
     implementation 'org.reflections:reflections:0.10.2'
-    implementation 'com.zaxxer:HikariCP:5.0.1'
-    implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.33'
-    implementation 'org.slf4j:slf4j-jdk14:2.0.7'
-    implementation group: 'org.hibernate', name: 'hibernate-hikaricp', version: '6.2.6.Final'
-    implementation group: 'org.hibernate', name: 'hibernate-core', version: '6.2.6.Final'
-    implementation 'de.themoep:minedown-adventure:1.7.2-SNAPSHOT'
-    implementation 'dev.dbassett:skullcreator:3.0.1'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation group: 'com.mysql', name: 'mysql-connector-j', version: '9.0.0'
+    implementation 'org.slf4j:slf4j-jdk14:2.0.13'
+    implementation group: 'org.hibernate', name: 'hibernate-hikaricp', version: '6.5.2.Final'
+    implementation group: 'org.hibernate', name: 'hibernate-core', version: '6.5.2.Final'
+    implementation 'de.themoep:minedown-adventure:1.7.3-SNAPSHOT'
     implementation 'org.javacord:javacord-api:3.8.0'
     implementation 'org.javacord:javacord-core:3.8.0'
 }
@@ -71,11 +92,9 @@ shadowJar {
     relocate 'com.flowpowered', 'com.flowpowered'
 }
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
-task relocateShadowJar(type: ConfigureShadowRelocation) {
-    target = tasks.shadowJar
-    prefix = "de.neincraft.shadow"
+tasks.named('shadowJar', ShadowJar) {
+    enableRelocation true
+    relocationPrefix "de.neincraft.shadow"
 }
-
-tasks.shadowJar.dependsOn tasks.relocateShadowJar
