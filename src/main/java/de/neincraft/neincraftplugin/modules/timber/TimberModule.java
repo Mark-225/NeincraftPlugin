@@ -59,7 +59,7 @@ public class TimberModule extends AbstractModule implements Listener {
                 xzOffset = 0;
                 toBreak = List.of(Material.BIRCH_LOG);
                 }
-            case DARK_OAK_LOG -> {
+            case DARK_OAK_LOG, PALE_OAK_LOG -> {
                 searchLimit = 80;
                 xzOffset = 3;
                 toBreak = List.of(Material.DARK_OAK_LOG);
