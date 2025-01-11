@@ -233,7 +233,7 @@ public abstract class PlotUtils {
             final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.YELLOW, 3f);
             BukkitTask task = Bukkit.getScheduler().runTaskTimerAsynchronously(NeincraftPlugin.getInstance(), () ->{
                 for(Vector3i loc : particleLocations){
-                    player.spawnParticle(Particle.REDSTONE, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, dustOptions);
+                    player.spawnParticle(Particle.DUST, loc.getX(), loc.getY(), loc.getZ(), 1, 0, 0, 0, 0, dustOptions);
                 }
             }, 5, 20);
 

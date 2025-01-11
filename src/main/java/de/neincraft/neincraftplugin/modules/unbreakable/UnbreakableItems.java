@@ -29,7 +29,7 @@ public class UnbreakableItems extends AbstractModule implements Listener {
     @EventHandler
     public void onItemDamage(PlayerItemDamageEvent event){
         if(event.getItem().getType() == Material.ELYTRA) return;
-        if(event.getItem().getEnchantmentLevel(Enchantment.DURABILITY) < 3) return;
+        if(event.getItem().getEnchantmentLevel(Enchantment.UNBREAKING) < 3) return;
 
         if(event.getItem().hasItemMeta() && event.getItem().getItemMeta() instanceof Damageable damageable){
             if(damageable.getDamage() + event.getDamage() < event.getItem().getType().getMaxDurability()) return;
@@ -43,7 +43,7 @@ public class UnbreakableItems extends AbstractModule implements Listener {
     @EventHandler
     public void onItemUse(PlayerInteractEvent event){
         if(event.getItem() == null) return;
-        if(event.getItem().getEnchantmentLevel(Enchantment.DURABILITY) < 3) return;
+        if(event.getItem().getEnchantmentLevel(Enchantment.UNBREAKING) < 3) return;
         if(event.getItem().hasItemMeta() && event.getItem().getItemMeta() instanceof Damageable damageable){
             if(damageable.getDamage() >= event.getItem().getType().getMaxDurability() - 1) {
                 event.setCancelled(true);
@@ -69,7 +69,7 @@ public class UnbreakableItems extends AbstractModule implements Listener {
         boolean update = false;
         for(int i = 0; i < player.getInventory().getArmorContents().length; i++){
             ItemStack is = player.getInventory().getArmorContents()[i];
-            if(is == null || is.getType() == Material.AIR || is.getEnchantmentLevel(Enchantment.DURABILITY) < 3) continue;
+            if(is == null || is.getType() == Material.AIR || is.getEnchantmentLevel(Enchantment.UNBREAKING) < 3) continue;
             if(is.hasItemMeta() && is.getItemMeta() instanceof Damageable damageable){
                 if(damageable.getDamage() >= is.getType().getMaxDurability() - 1){
                         ItemStack item = is.clone();

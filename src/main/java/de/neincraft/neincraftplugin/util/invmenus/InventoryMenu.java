@@ -1,4 +1,4 @@
-package de.neincraft.neincraftplugin.util;
+package de.neincraft.neincraftplugin.util.invmenus;
 
 import de.neincraft.neincraftplugin.NeincraftPlugin;
 import net.kyori.adventure.text.Component;

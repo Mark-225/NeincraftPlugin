@@ -99,7 +99,7 @@ public class PortalCommand implements CommandExecutor, SimpleTabCompleter {
 
     private ItemStack createPortalEditTool(String name){
         ItemStack is = new ItemStack(Material.STICK);
-        is.addUnsafeEnchantment(Enchantment.DURABILITY, 1);
+        is.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
         is.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         ItemMeta im = is.getItemMeta();
         im.displayName(new MineDown("Portal Tool - " + name).toComponent());

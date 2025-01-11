@@ -27,10 +27,12 @@ import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.text.DecimalFormat;
@@ -162,7 +164,7 @@ public class TinyFeatures extends AbstractModule implements Listener {
             lore.add(new MineDown("&gray&Soulbound").toComponent());
             im.lore(lore);
         });
-        inv.setRepairCost(1);
+        event.getView().setRepairCost(1);
         event.setResult(target);
     }
 
